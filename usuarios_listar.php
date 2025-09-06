@@ -1,0 +1,128 @@
+<?php
+// usuarios_listar.php – listagem de funcionários
+require_once 'config.php';
+requirePrivileged();
+
+// Get all employees along with their store name.  Managers see only their store.
+if ($_SESSION['user_role'] === 'manager') {
+    $currentUser = currentUser();
+        $stmt = $pdo->prepare('SELECT e.*, s.name AS store_name, u.role AS user_role FROM employees e
+                               LEFT JOIN stores s ON e.store_id = s.id
+                               LEFT JOIN users u ON u.employee_id = e.id
+                               WHERE e.store_id = ?
+                               ORDER BY e.name');
+    $stmt->execute([$currentUser['store_id']]);
+    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+        $stmt = $pdo->query('SELECT e.*, s.name AS store_name, u.role AS user_role FROM employees e
+                             LEFT JOIN stores s ON e.store_id = s.id
+                             LEFT JOIN users u ON u.employee_id = e.id
+                             ORDER BY e.name');
+    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Funcionários – Escala Hillbillys</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- DataTables CSS for enhanced tables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
+                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
+                    <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
+                    <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a>
+                    <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Funcionários</h3>
+            <div>
+                <a href="export_employees.php" class="btn btn-secondary me-2">Exportar CSV</a>
+                <a href="usuario_criar.php" class="btn btn-success">Adicionar Funcionário</a>
+            </div>
+        </div>
+        <table id="employeesTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th>Loja</th>
+                    <th>PPSN</th>
+                    <th>IRP</th>
+                    <th>Salário/h (€)</th>
+                    <th>Perfil</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($employees as $emp): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($emp['id']); ?></td>
+                        <td><?php echo htmlspecialchars($emp['name']); ?></td>
+                        <td><?php echo htmlspecialchars($emp['email']); ?></td>
+                        <td><?php echo htmlspecialchars($emp['phone']); ?></td>
+                        <td><?php echo htmlspecialchars($emp['store_name'] ?? ''); ?></td>
+                        <td><?php echo htmlspecialchars($emp['ppsn'] ?? ''); ?></td>
+                        <td><?php echo htmlspecialchars($emp['irp'] ?? ''); ?></td>
+                        <td><?php echo $emp['hourly_rate'] !== null ? number_format($emp['hourly_rate'], 2) : ''; ?></td>
+                        <td>
+                            <?php
+                                if (isset($emp['user_role'])) {
+                                    echo htmlspecialchars($emp['user_role'] === 'manager' ? 'Gerente' : 'Funcionário');
+                                } else {
+                                    echo '';
+                                }
+                            ?>
+                        </td>
+                        <td>
+                            <a href="usuario_editar.php?id=<?php echo $emp['id']; ?>" class="btn btn-sm btn-primary">Editar</a>
+                            <a href="usuario_excluir.php?id=<?php echo $emp['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');">Excluir</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Include jQuery and DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+    // Initialize DataTables for employees list
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#employeesTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+            },
+            order: [[1, 'asc']]
+        });
+    });
+    </script>
+</body>
+</html>

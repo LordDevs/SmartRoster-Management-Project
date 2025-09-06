@@ -1,0 +1,28 @@
+# OS
+Thumbs.db
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# PHP/XAMPP
+vendor/
+.env
+.env.*
+*.log
+.phpunit.result.cache
+.php_cs.cache
+cache/
+tmp/
+temp/
+logs/
+# uploads e storage locais
+uploads/
+storage/
+public/uploads/
+
+# credenciais locais
+config.php
