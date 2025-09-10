@@ -67,8 +67,11 @@ try {
         <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
         <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
         <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-        <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a>
+        <?php if ($user['role'] === 'admin'): ?>
+        <li class="nav-item"><a class="nav-link" href="lojas_listar.php">Lojas</a></li>
+        <?php else: ?>
         <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
+        <?php endif; ?>
       </ul>
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>

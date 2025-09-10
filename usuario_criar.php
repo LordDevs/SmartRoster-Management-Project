@@ -1,17 +1,21 @@
 <?php
-// usuario_criar.php – form for creating a new employee
+// usuario_criar_max.php
+// Este arquivo é uma versão extendida de usuario_criar.php com suporte para
+// definir o limite semanal de horas (max_weekly_hours) para cada funcionário.
+
 require_once 'config.php';
+
+// Somente usuários com privilégios podem acessar (admin ou gerente)
 requirePrivileged();
 
-// Current user (admin or manager)
-$currentUser = currentUser();
-
-// Fetch available stores.  Admins can assign to any store; managers (unlikely to access) only see their store.
+// Verificar a loja do usuário para determinar as opções de lojas a serem exibidas
 $stores = [];
+$currentUser = currentUser();
 if ($_SESSION['user_role'] === 'admin') {
+    // Administradores podem escolher qualquer loja
     $stores = $pdo->query('SELECT * FROM stores ORDER BY name')->fetchAll(PDO::FETCH_ASSOC);
 } else {
-    // Manager can only assign to their own store
+    // Gerentes só podem associar funcionários à sua própria loja
     if ($currentUser && $currentUser['store_id']) {
         $stmt = $pdo->prepare('SELECT * FROM stores WHERE id = ?');
         $stmt->execute([$currentUser['store_id']]);
@@ -19,33 +23,30 @@ if ($_SESSION['user_role'] === 'admin') {
     }
 }
 
-$errors = [];
-
-// Prepare default form values
+// Valores padrão do formulário
 $defaultValues = [
     'name' => '',
     'email' => '',
     'phone' => '',
-    // Irish compliance: PPSN and IRP fields
     'ppsn' => '',
     'irp' => '',
-    // Hourly rate (salary) field
     'hourly_rate' => '',
+    'max_weekly_hours' => '40',
     'create_login' => '',
     'username' => '',
     'password' => '',
     'store_id' => '',
-    // Default role for new user accounts; admins can change this to 'manager'
     'user_role' => 'employee'
 ];
 
-// Merge POST values with defaults for repopulating the form
+// Mesclar valores enviados via POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($defaultValues as $key => $val) {
         $defaultValues[$key] = $_POST[$key] ?? '';
     }
 }
 
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -54,19 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $createLogin = isset($_POST['create_login']);
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    // New fields
     $ppsn = trim($_POST['ppsn'] ?? '');
     $irp = trim($_POST['irp'] ?? '');
     $hourly_rate = trim($_POST['hourly_rate'] ?? '');
-    // Determine role for the new user (defaults to employee); only admins can assign manager
+    // Novo campo de limite de horas semanais
+    $max_weekly_hours = trim($_POST['max_weekly_hours'] ?? '40');
     $selectedRole = 'employee';
     if ($createLogin) {
         $selectedRole = $_POST['user_role'] ?? 'employee';
         if ($_SESSION['user_role'] !== 'admin') {
-            // Non-admins cannot assign manager role
             $selectedRole = 'employee';
         }
-        // Sanitize allowed values
         if (!in_array($selectedRole, ['employee', 'manager'])) {
             $selectedRole = 'employee';
         }
@@ -78,7 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($username === '' || $password === '') {
             $errors[] = 'Usuário e senha são obrigatórios para criar conta.';
         }
-        // Check if username already exists
         $check = $pdo->prepare('SELECT id FROM users WHERE username = ?');
         $check->execute([$username]);
         if ($check->fetch()) {
@@ -86,32 +84,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if (empty($errors)) {
-        // Determine the store for the new employee.  Managers default to their own store.
+        // Determinar loja
         if ($store_id === '' && $_SESSION['user_role'] !== 'admin') {
             $store_id = $currentUser['store_id'] ?? null;
         }
-        // Insert employee record
-        $stmt = $pdo->prepare('INSERT INTO employees (name, email, phone, store_id, ppsn, irp, hourly_rate) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        // Inserir funcionário
+        $stmt = $pdo->prepare('INSERT INTO employees (name, email, phone, store_id, ppsn, irp, hourly_rate, max_weekly_hours) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         $hourlyRateVal = ($hourly_rate !== '') ? floatval($hourly_rate) : null;
-        $stmt->execute([$name, $email, $phone, $store_id ?: null, $ppsn ?: null, $irp ?: null, $hourlyRateVal]);
+        $maxWeeklyVal = ($max_weekly_hours !== '') ? floatval($max_weekly_hours) : 40.0;
+        $stmt->execute([$name, $email, $phone, $store_id ?: null, $ppsn ?: null, $irp ?: null, $hourlyRateVal, $maxWeeklyVal]);
         $employeeId = $pdo->lastInsertId();
-        // Optionally create user login
+        // Criar login (opcional)
         if ($createLogin) {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        if ($selectedRole === 'manager') {
-            // Create a manager account linked to the selected store. employee_id is NULL for managers.
-            $stmt = $pdo->prepare('INSERT INTO users (username, password, role, employee_id, store_id) VALUES (?, ?, ?, NULL, ?)');
-            $stmt->execute([$username, $hash, 'manager', $store_id ?: null]);
-        } else {
-            // Regular employee account: link to employee_id
-            $stmt = $pdo->prepare('INSERT INTO users (username, password, role, employee_id) VALUES (?, ?, ?, ?)');
-            $stmt->execute([$username, $hash, 'employee', $employeeId]);
-        }
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            if ($selectedRole === 'manager') {
+                $stmt = $pdo->prepare('INSERT INTO users (username, password, role, employee_id, store_id) VALUES (?, ?, ?, NULL, ?)');
+                $stmt->execute([$username, $hash, 'manager', $store_id ?: null]);
+            } else {
+                $stmt = $pdo->prepare('INSERT INTO users (username, password, role, employee_id) VALUES (?, ?, ?, ?)');
+                $stmt->execute([$username, $hash, 'employee', $employeeId]);
+            }
         }
         header('Location: usuarios_listar.php');
         exit();
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -124,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a>
+            <a class="navbar-brand" href="<?php echo ($_SESSION['user_role'] === 'manager') ? 'manager_dashboard.php' : 'dashboard.php'; ?>">Escala Hillbillys</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -133,11 +131,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
                     <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
                     <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
                     <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
                     <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
                     <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
                     <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
+                    <li class="nav-item"><a class="nav-link" href="analytics.php">Métricas</a></li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
@@ -147,96 +145,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </nav>
     <div class="container mt-4">
         <h3>Novo Funcionário</h3>
-        <?php if ($errors): ?>
+        <?php if (!empty($errors)): ?>
             <div class="alert alert-danger">
                 <ul class="mb-0">
-                    <?php foreach ($errors as $err): ?>
-                        <li><?php echo htmlspecialchars($err); ?></li>
-                    <?php endforeach; ?>
+                <?php foreach ($errors as $err): ?>
+                    <li><?php echo htmlspecialchars($err); ?></li>
+                <?php endforeach; ?>
                 </ul>
             </div>
         <?php endif; ?>
         <form method="post">
-            <div class="mb-3">
-                <label for="name" class="form-label">Nome</label>
-                <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($defaultValues['name']); ?>" required>
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">E-mail</label>
-                <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($defaultValues['email']); ?>">
-            </div>
-            <div class="mb-3">
-                <label for="phone" class="form-label">Telefone</label>
-                <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($defaultValues['phone']); ?>">
-            </div>
-
-            <div class="mb-3">
-                <label for="ppsn" class="form-label">PPSN</label>
-                <input type="text" class="form-control" id="ppsn" name="ppsn" value="<?php echo htmlspecialchars($defaultValues['ppsn']); ?>">
-            </div>
-            <div class="mb-3">
-                <label for="irp" class="form-label">IRP</label>
-                <input type="text" class="form-control" id="irp" name="irp" value="<?php echo htmlspecialchars($defaultValues['irp']); ?>">
-            </div>
-            <div class="mb-3">
-                <label for="hourly_rate" class="form-label">Salário por Hora (€)</label>
-                <input type="number" step="0.01" class="form-control" id="hourly_rate" name="hourly_rate" value="<?php echo htmlspecialchars($defaultValues['hourly_rate']); ?>">
-            </div>
-
-            <?php if (!empty($stores)): ?>
-            <div class="mb-3">
-                <label for="store_id" class="form-label">Loja</label>
-                <select class="form-select" id="store_id" name="store_id" <?php echo $_SESSION['user_role'] !== 'admin' ? 'disabled' : ''; ?>>
-                    <option value="">Selecione...</option>
-                    <?php foreach ($stores as $store): ?>
-                        <option value="<?php echo $store['id']; ?>" <?php echo ($defaultValues['store_id'] == $store['id']) ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($store['name']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <?php if ($_SESSION['user_role'] !== 'admin'): ?>
-                    <input type="hidden" name="store_id" value="<?php echo $stores[0]['id']; ?>">
-                <?php endif; ?>
-            </div>
-            <?php endif; ?>
-            <hr>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="create_login" name="create_login" <?php echo $defaultValues['create_login'] ? 'checked' : ''; ?>>
-                <label class="form-check-label" for="create_login">Criar conta de acesso para este funcionário</label>
-            </div>
-            <div id="loginFields" style="display: <?php echo $defaultValues['create_login'] ? 'block' : 'none'; ?>;">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Usuário</label>
-                    <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($defaultValues['username']); ?>">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nome</label>
+                    <input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($defaultValues['name']); ?>" required>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Senha</label>
-                    <input type="password" class="form-control" id="password" name="password" value="<?php echo htmlspecialchars($defaultValues['password']); ?>">
+                <div class="col-md-6">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($defaultValues['email']); ?>">
                 </div>
-                <?php if ($_SESSION['user_role'] === 'admin'): ?>
-                <div class="mb-3">
-                    <label for="user_role" class="form-label">Perfil de Acesso</label>
-                    <select class="form-select" id="user_role" name="user_role">
-                        <option value="employee" <?php echo ($defaultValues['user_role'] === 'employee') ? 'selected' : ''; ?>>Funcionário</option>
-                        <option value="manager" <?php echo ($defaultValues['user_role'] === 'manager') ? 'selected' : ''; ?>>Gerente</option>
+                <div class="col-md-6">
+                    <label class="form-label">Telefone</label>
+                    <input type="text" name="phone" class="form-control" value="<?php echo htmlspecialchars($defaultValues['phone']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">PPSN</label>
+                    <input type="text" name="ppsn" class="form-control" value="<?php echo htmlspecialchars($defaultValues['ppsn']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">IRP</label>
+                    <input type="text" name="irp" class="form-control" value="<?php echo htmlspecialchars($defaultValues['irp']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Salário por Hora (€)</label>
+                    <input type="number" step="0.01" name="hourly_rate" class="form-control" value="<?php echo htmlspecialchars($defaultValues['hourly_rate']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Limite de Horas Semanais</label>
+                    <input type="number" step="0.1" name="max_weekly_hours" class="form-control" value="<?php echo htmlspecialchars($defaultValues['max_weekly_hours']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Loja</label>
+                    <select name="store_id" class="form-select">
+                        <option value="">Selecione...</option>
+                        <?php foreach ($stores as $s): ?>
+                            <option value="<?php echo $s['id']; ?>" <?php echo ($defaultValues['store_id'] == $s['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($s['name']); ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
-                <?php else: ?>
-                    <input type="hidden" name="user_role" value="employee">
-                <?php endif; ?>
             </div>
-            <button type="submit" class="btn btn-success">Salvar</button>
-            <a href="usuarios_listar.php" class="btn btn-secondary">Cancelar</a>
+            <hr>
+            <div class="form-check mt-2">
+                <input type="checkbox" class="form-check-input" id="create_login" name="create_login" <?php echo ($defaultValues['create_login']) ? 'checked' : ''; ?>>
+                <label class="form-check-label" for="create_login">Criar conta de acesso para este funcionário</label>
+            </div>
+            <div id="loginFields" style="display: <?php echo ($defaultValues['create_login']) ? 'block' : 'none'; ?>;">
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Usuário</label>
+                        <input type="text" name="username" class="form-control" value="<?php echo htmlspecialchars($defaultValues['username']); ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Senha</label>
+                        <input type="password" name="password" class="form-control" value="">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Perfil de Acesso</label>
+                        <select name="user_role" class="form-select">
+                            <option value="employee" <?php echo ($defaultValues['user_role'] === 'employee') ? 'selected' : ''; ?>>Funcionário</option>
+                            <option value="manager" <?php echo ($defaultValues['user_role'] === 'manager') ? 'selected' : ''; ?>>Gerente</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success">Salvar</button>
+                <a href="usuarios_listar.php" class="btn btn-secondary">Cancelar</a>
+            </div>
         </form>
-        <script>
-            // Show or hide login fields based on checkbox
-            const createLoginCheckbox = document.getElementById('create_login');
-            const loginFields = document.getElementById('loginFields');
-            createLoginCheckbox.addEventListener('change', function() {
-                loginFields.style.display = this.checked ? 'block' : 'none';
-            });
-        </script>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('create_login').addEventListener('change', function() {
+            document.getElementById('loginFields').style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
 </body>
 </html>

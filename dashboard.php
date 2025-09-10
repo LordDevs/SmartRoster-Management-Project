@@ -59,7 +59,7 @@ for ($i = 6; $i >= 0; $i--) {
                     <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
                     <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
                     <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a>
-                    <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
+                    <li class="nav-item"><a class="nav-link" href="loja_gerenciar_updated.php">Loja</a></li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
