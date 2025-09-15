@@ -45,37 +45,15 @@ try {
     <title>Calendário Interativo – Escala Hillbillys</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css">
     <style>body{padding-top:60px;}</style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-  <div class="container-fluid">
-    <?php if ($user['role'] === 'admin'): ?>
-      <a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a>
-    <?php else: ?>
-      <a class="navbar-brand" href="manager_dashboard.php">Escala Hillbillys – Gerente</a>
-    <?php endif; ?>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
-        <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
-        <li class="nav-item"><a class="nav-link active" href="escala_calendario.php">Calendário</a></li>
-        <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
-        <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
-        <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-        <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a>
-        <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
-      </ul>
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<?php
+    $activePage = 'calendario';
+    require_once __DIR__ . '/navbar.php';
+?>
 <div class="container">
   <h3 class="mb-3">Calendário Interativo</h3>
   <div id="calendar"></div>

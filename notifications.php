@@ -47,15 +47,13 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Notificações – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <?php if (function_exists('render_navbar')) {
-        // Se houver função para renderizar navbar, use-a
-        render_navbar();
-    } else {
-        // Navbar básica caso a função não exista
-        echo '<nav class="navbar navbar-expand-lg navbar-dark bg-primary"><div class="container-fluid"><a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alterna navegação"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="navbarNav"><ul class="navbar-nav me-auto mb-2 mb-lg-0"><li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li><li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li><li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li><li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li><li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li><li class="nav-item"><a class="nav-link active" href="notifications.php">Notificações</a></li></ul><ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li></ul></div></div></nav>';
-    }
+    <?php
+        // Use unified navbar
+        $activePage = '';
+        require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
         <h3>Notificações</h3>

@@ -1,0 +1,118 @@
+-- db/mysql_schema.sql
+SET NAMES utf8mb4;
+SET time_zone = '+00:00';
+SET FOREIGN_KEY_CHECKS=0;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin','manager','employee') NOT NULL DEFAULT 'employee',
+  store_id INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS stores (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  address VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE users
+  ADD CONSTRAINT fk_users_store
+  FOREIGN KEY (store_id) REFERENCES stores(id)
+  ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS employees (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  full_name VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NULL,
+  phone VARCHAR(50) NULL,
+  store_id INT NULL,
+  position VARCHAR(100) NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_emp_store FOREIGN KEY (store_id) REFERENCES stores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_emp_user FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS shifts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  store_id INT NOT NULL,
+  employee_id INT NULL,
+  title VARCHAR(120) NULL,
+  start_at DATETIME NOT NULL,
+  end_at   DATETIME NOT NULL,
+  notes VARCHAR(255) NULL,
+  created_by INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_sh_store FOREIGN KEY (store_id) REFERENCES stores(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_sh_emp FOREIGN KEY (employee_id) REFERENCES employees(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_sh_user FOREIGN KEY (created_by) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX idx_shifts_store_time (store_id, start_at, end_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS time_entries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  clock_in DATETIME NOT NULL,
+  clock_out DATETIME NULL,
+  source ENUM('manual','kiosk','web') DEFAULT 'web',
+  notes VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_te_emp FOREIGN KEY (employee_id) REFERENCES employees(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX idx_te_emp_time (employee_id, clock_in)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS swap_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  from_shift_id INT NOT NULL,
+  to_shift_id INT NULL,
+  requester_id INT NOT NULL,
+  status ENUM('pending','approved','rejected','cancelled') DEFAULT 'pending',
+  reason VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_sr_from FOREIGN KEY (from_shift_id) REFERENCES shifts(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_sr_to FOREIGN KEY (to_shift_id) REFERENCES shifts(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_sr_user FOREIGN KEY (requester_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type VARCHAR(60) NOT NULL,
+  payload JSON NULL,
+  read_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX idx_notif_user_read (user_id, read_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS employee_preferences (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  day_of_week TINYINT NOT NULL,
+  preferred_start TIME NULL,
+  preferred_end   TIME NULL,
+  unavailable TINYINT(1) NOT NULL DEFAULT 0,
+  notes VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pref_emp FOREIGN KEY (employee_id) REFERENCES employees(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE KEY uniq_emp_day (employee_id, day_of_week)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET FOREIGN_KEY_CHECKS=1;

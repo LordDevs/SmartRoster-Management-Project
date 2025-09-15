@@ -37,37 +37,18 @@ for ($i = 6; $i >= 0; $i--) {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Painel – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         body { padding-top: 60px; }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
-                    <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a>
-                    <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    <?php
+        // Mark no specific item active on the dashboard
+        $activePage = '';
+        require_once __DIR__ . '/navbar.php';
+    ?>
     <div class="container">
         <div class="row mb-4">
             <div class="col-md-4">

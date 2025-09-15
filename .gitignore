@@ -25,4 +25,4 @@ storage/
 public/uploads/
 
 # credenciais locais
-# config.php
+config.php
