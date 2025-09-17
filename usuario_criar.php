@@ -118,31 +118,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Novo Funcionário – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="<?php echo ($_SESSION['user_role'] === 'manager') ? 'manager_dashboard.php' : 'dashboard.php'; ?>">Escala Hillbillys</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
-                    <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-                    <li class="nav-item"><a class="nav-link" href="loja_gerenciar.php">Loja</a></li>
-                    <li class="nav-item"><a class="nav-link" href="analytics.php">Métricas</a></li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <?php
+        $activePage = 'usuarios';
+        require_once __DIR__ . '/navbar.php';
+    ?>
     <div class="container mt-4">
         <h3>Novo Funcionário</h3>
         <?php if (!empty($errors)): ?>

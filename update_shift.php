@@ -3,8 +3,10 @@
 // Script para atualizar turnos com validações adicionais de datas passadas e escopo por loja.
 // Requer helpers: assertNotPastDate, userCanManageStore, getEmployeeStoreId.
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 @require_once 'notifications_helpers.php';
+// Sistema de notificações unificado
+@require_once __DIR__ . '/lib/notify.php';
 
 requirePrivileged();
 $user = currentUser();
@@ -105,11 +107,22 @@ try {
     // Atualizar turno
     $up = $pdo->prepare('UPDATE shifts SET employee_id = ?, date = ?, start_time = ?, end_time = ? WHERE id = ?');
     $up->execute([$newEmployee, $newDate, $newStart, $newEnd, $id]);
-    // Notificação
+    // Notificação in-app
     if (function_exists('addNotification')) {
         $storeName = $empData['store_name'] ?? $current['store_name'] ?? null;
         $msg = formatShiftMsg($newDate, $newStart, $newEnd, $storeName, 'Turno atualizado');
         addNotification($pdo, (int)$newEmployee, $msg, 'shift_updated');
+    }
+    // Notificação adicional por e‑mail e Slack
+    if (function_exists('notify_shift_event')) {
+        $storeName = $empData['store_name'] ?? $current['store_name'] ?? null;
+        notify_shift_event($pdo, 'updated', [
+            'employee_id' => (int)$newEmployee,
+            'date'        => $newDate,
+            'start'       => $newStart,
+            'end'         => $newEnd,
+            'store_name'  => $storeName,
+        ]);
     }
     echo json_encode(['success' => true]);
 } catch (Exception $e) {

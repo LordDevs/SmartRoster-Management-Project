@@ -1,6 +1,9 @@
+
+
 <?php
 // index.php – login page for the Escala Hillbillys system
-require_once 'config.php';
+require_once __DIR__ . '/scripts/set_mysql_env_example.php';
+require_once __DIR__ . '/config.php';
 
 // If the user is already logged in, redirect to the dashboard.
 if (isLoggedIn()) {
@@ -20,6 +23,7 @@ unset($_SESSION['login_error']);
     <title>Escala Hillbillys – Login</title>
     <!-- Bootstrap CSS from CDN for responsive layout -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
     <style>
         body {
             background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);

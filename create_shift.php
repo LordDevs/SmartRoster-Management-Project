@@ -4,8 +4,10 @@
 // Requer funções utilitárias definidas em config.php: assertNotPastDate, userCanManageStore, getEmployeeStoreId.
 
 require_once 'config.php';
-// Inclua notificações se estiver usando o sistema de avisos
+// Inclua notificações internas
 @require_once 'notifications_helpers.php';
+// Inclua sistema unificado de notificações (in-app, e-mail, Slack)
+@require_once __DIR__ . '/lib/notify.php';
 
 requirePrivileged();
 $user = currentUser();
@@ -83,11 +85,22 @@ try {
     $ins = $pdo->prepare('INSERT INTO shifts (employee_id, date, start_time, end_time) VALUES (?, ?, ?, ?)');
     $ins->execute([$employeeId, $date, $startTime, $endTime]);
     $shiftId = $pdo->lastInsertId();
-    // Notificar
+    // Notificar: in-app, e-mail e Slack
     if (function_exists('addNotification')) {
         $storeName = $pdo->query('SELECT name FROM stores WHERE id = '.$empStoreId)->fetchColumn();
         $msg = formatShiftMsg($date, $startTime, $endTime, $storeName, 'Turno atribuído');
         addNotification($pdo, $employeeId, $msg, 'shift_created');
+    }
+    // Também enviar notificação pelos canais adicionais
+    if (function_exists('notify_shift_event')) {
+        $storeName = $storeName ?? ($pdo->query('SELECT name FROM stores WHERE id = '.$empStoreId)->fetchColumn());
+        notify_shift_event($pdo, 'created', [
+            'employee_id' => $employeeId,
+            'date'        => $date,
+            'start'       => $startTime,
+            'end'         => $endTime,
+            'store_name'  => $storeName,
+        ]);
     }
     echo json_encode(['success' => true, 'shift' => [
         'id' => $shiftId,

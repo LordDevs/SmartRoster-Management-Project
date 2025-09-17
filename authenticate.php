@@ -1,6 +1,6 @@
 <?php
 // authenticate.php – handle login form submissions
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

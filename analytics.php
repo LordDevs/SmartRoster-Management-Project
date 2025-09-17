@@ -1,6 +1,6 @@
 <?php
 // analytics.php – Painel de métricas avançadas para escalas e registros de ponto
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 requireLogin();
 $user = currentUser();
 if (!$user || !in_array($user['role'], ['admin','manager'])) {
@@ -81,36 +81,15 @@ foreach ($hoursByEmployee as $eid => $data) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Métricas Avançadas – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <?php if ($user['role'] === 'admin'): ?>
-            <a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a>
-        <?php else: ?>
-            <a class="navbar-brand" href="manager_dashboard.php">Escala Hillbillys – Gerente</a>
-        <?php endif; ?>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbars" aria-controls="navbars" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbars">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
-                <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
-                <li class="nav-item"><a class="nav-link" href="escala_calendario.php">Calendário</a></li>
-                <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
-                <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
-                <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-                <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a></li>
-                <li class="nav-item"><a class="nav-link" href="loja_gerenciar_updated.php">Loja</a></li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<?php
+    // Define the active page for the navbar
+    $activePage = 'metricas';
+    require_once __DIR__ . '/navbar.php';
+?>
 <div class="container mt-4">
     <h3>Relatório de Horas Trabalhadas vs Agendadas</h3>
     <div class="row">

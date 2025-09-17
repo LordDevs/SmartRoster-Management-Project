@@ -64,28 +64,13 @@ $valueClockOut = $entry['clock_out'] ? date('Y-m-d\TH:i', strtotime($entry['cloc
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Corrigir Registro de Ponto – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">Escala Hillbillys</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="ponto_listar.php">Pontos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <?php
+        $activePage = 'pontos';
+        require_once __DIR__ . '/navbar.php';
+    ?>
     <div class="container mt-4">
         <h3>Corrigir Registro de Ponto</h3>
         <p><strong>Funcionário:</strong> <?php echo htmlspecialchars($entry['employee_name']); ?></p>

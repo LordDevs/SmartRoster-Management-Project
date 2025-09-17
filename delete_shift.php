@@ -1,6 +1,8 @@
 <?php
 require_once 'config.php';
 require_once 'notifications_helpers.php';
+// Inclua sistema de notificação unificado
+@require_once __DIR__ . '/lib/notify.php';
 requirePrivileged();
 header('Content-Type: application/json');
 $user=currentUser(); $role=$user['role']; $storeId=$user['store_id']??null;
@@ -12,6 +14,17 @@ try{
   if(!$shift){ echo json_encode(['success'=>false,'message'=>'Turno não encontrado.']); exit(); }
   if($role==='manager' && $storeId!==null && (int)$shift['store_id']!==(int)$storeId){ echo json_encode(['success'=>false,'message'=>'Você não tem permissão para excluir este turno.']); exit(); }
   $pdo->prepare('DELETE FROM shifts WHERE id=?')->execute([$shiftId]);
-  $msg=formatShiftMsg($shift['date'],$shift['start_time'],$shift['end_time'],$shift['store_name']??null,'Turno cancelado'); addNotification($pdo,(int)$shift['employee_id'],$msg,'shift_deleted');
+  $msg=formatShiftMsg($shift['date'],$shift['start_time'],$shift['end_time'],$shift['store_name']??null,'Turno cancelado');
+  addNotification($pdo,(int)$shift['employee_id'],$msg,'shift_deleted');
+  // Notificar também por e‑mail e Slack
+  if (function_exists('notify_shift_event')) {
+      notify_shift_event($pdo, 'deleted', [
+          'employee_id' => (int)$shift['employee_id'],
+          'date'        => $shift['date'],
+          'start'       => $shift['start_time'],
+          'end'         => $shift['end_time'],
+          'store_name'  => $shift['store_name'] ?? null,
+      ]);
+  }
   echo json_encode(['success'=>true]);
 }catch(Exception $e){ echo json_encode(['success'=>false,'message'=>'Erro: '.$e->getMessage()]); }

@@ -33,6 +33,7 @@ function get_pref_field($prefs, $day, $field) {
     <meta charset="utf-8">
     <title>Preferências de Funcionário</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" integrity="sha384-9ndCyUa4y3Yz2+1Jqv1MDwse4bCMZJ6uaOYJ6xZgTwHUnYlXyt1e1NEMqH9cO2+" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <?php include 'navbar.php'; ?>
