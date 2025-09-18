@@ -26,3 +26,8 @@ public/uploads/
 
 # credenciais locais
 config.php
+node_modules/
+lib/
+.env
+*.log
+.DS_Store

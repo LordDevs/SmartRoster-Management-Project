@@ -10,6 +10,10 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start();
 }
+// Notificações (opcionais)
+$MAIL_FROM       = getenv('MAIL_FROM') ?: 'no-reply@localhost';
+$MAIL_FROM_NAME  = getenv('MAIL_FROM_NAME') ?: 'Escala Hillbillys';
+$SLACK_WEBHOOK   = getenv('SLACK_WEBHOOK_URL') ?: '';
 
 // ENV / Config
 $DB_DRIVER = getenv('DB_DRIVER') ?: 'sqlite'; // 'sqlite' or 'mysql'
