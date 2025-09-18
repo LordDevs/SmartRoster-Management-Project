@@ -31,3 +31,9 @@ lib/
 .env
 *.log
 .DS_Store
+config.php
+.env
+node_modules/
+lib/
+*.log
+.DS_Store
