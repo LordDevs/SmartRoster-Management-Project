@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'authenticate.php';
+requireEmployee();
 
 $funcionario_id = $_POST['funcionario_id'] ?? null;
 if (!$funcionario_id) {

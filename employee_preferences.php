@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'authenticate.php';
+requireEmployee();
 require_once 'helpers.php';
 
 // Garante que apenas funcionários logados possam acessar
