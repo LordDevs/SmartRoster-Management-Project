@@ -129,8 +129,8 @@ function validate_shift($funcionario_id, $start, $end, $conn) {
         }
         // Intervalo mínimo entre turnos
         if ($min_rest) {
-            $stmt3 = $conn->prepare('SELECT data, hora_inicio, hora_fim FROM escalas WHERE funcionario_id = ? ORDER BY data DESC, hora_fim DESC LIMIT 1');
-            $stmt3->bind_param('i', $funcionario_id);
+            $stmt3 = $conn->prepare('SELECT data, hora_inicio, hora_fim FROM escalas WHERE funcionario_id = ? AND CONCAT(data, " ", hora_fim) <= ? ORDER BY data DESC, hora_fim DESC LIMIT 1');
+            $stmt3->bind_param('is', $funcionario_id, $s);
             $stmt3->execute();
             $result3 = $stmt3->get_result();
             if ($row3 = $result3->fetch_assoc()) {
