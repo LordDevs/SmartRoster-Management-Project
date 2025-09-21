@@ -1,1 +1,1 @@
-Leia-me: passos de integração descritos na conversa.
+Read me: integration steps described in the conversation.

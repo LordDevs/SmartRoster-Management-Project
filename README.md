@@ -1,82 +1,82 @@
-Requisitos
-PHP 8+ com suporte a SQLite (pdo_sqlite).
+Requirements
+PHP 8+ with SQLite support (pdo_sqlite).
 
-Node.js 18+ para scripts de build e geração de apresentações.
+Node.js 18+ for build scripts and presentation generation.
 
-Opcional: Python 3.10+ para os utilitários de imagens.
+Optional: Python 3.10+ for image utilities.
 
-Configuração do Ambiente
-Clonar repositório
+Environment Setup
+Clone repository
 
-git clone <url-do-repo>
+git clone <repo-url>
 cd escala_hillbillys
-Instalar dependências Node (opcional)
+Install Node dependencies (optional)
 
 npm install
-Configurar banco de dados
+Configure database
 
-O arquivo db.sqlite já contém um esquema básico.
+The db.sqlite file already includes a basic schema.
 
-Para começar do zero, remova o arquivo e recrie a base executando os scripts de população (populate_employees.php, etc.) conforme necessário.
+To start from scratch, remove the file and rebuild the database by running the population scripts (populate_employees.php, etc.) as needed.
 
-Iniciar servidor PHP local
+Start local PHP server
 
 php -S localhost:8000
-A aplicação ficará acessível em http://localhost:8000.
+The application will be available at http://localhost:8000.
 
-Build de assets (quando necessário)
+Build assets (when needed)
 
-TailwindCSS/PostCSS: ajustar o comando conforme o fluxo desejado:
+TailwindCSS/PostCSS: adjust the command to match your preferred workflow:
 
 npx tailwindcss -i ./input.css -o ./output.css --watch
-Scripts de apresentação (slides_template.js, answer.js) podem ser executados com node.
+Presentation scripts (slides_template.js, answer.js) can be executed with node.
 
-Funcionalidades Principais
-Autenticação e Perfis
-Login via index.php com sessão PHP.
+Core Features
+Authentication and Profiles
+Log in through index.php with PHP sessions.
 
-Perfis de usuário: admin, manager e employee.
+User roles: admin, manager, and employee.
 
-Helpers requireLogin, requireAdmin e requirePrivileged garantem o acesso correto.
+The helper functions requireLogin, requireAdmin, and requirePrivileged enforce proper access.
 
-Painel de Controle
-Estatísticas de funcionários, turnos e horas trabalhadas (dashboard.php).
+Dashboard
+Employee, shift, and worked-hours statistics (dashboard.php).
 
-Gráficos por dia usando Chart.js.
+Daily charts powered by Chart.js.
 
-Gerenciamento de Funcionários e Usuários
-Cadastro, edição, exclusão e vinculação de funcionários a lojas.
+Employee and User Management
+Create, edit, delete, and link employees to stores.
 
-Controle de usuários do sistema (usuarios_listar.php, usuario_criar.php etc.).
+Manage system users (usuarios_listar.php, usuario_criar.php, etc.).
 
-Escalas/Turnos
-Criação manual (escala_criar.php) ou por sugestão automática com balanceamento de horas.
+Schedules/Shifts
+Create schedules manually (escala_criar.php) or via automatic suggestions with hour balancing.
 
-Listagem e edição de escalas existentes (escala_listar.php).
+List and edit existing schedules (escala_listar.php).
 
-Registro de Ponto
-Registro de entrada/saída (ponto_registrar.php).
+Time Clock
+Register check-ins and check-outs (ponto_registrar.php).
 
-Correção e listagem de apontamentos de tempo (ponto_corrigir.php, ponto_listar.php).
+Correct and review time entries (ponto_corrigir.php, ponto_listar.php).
 
-Notificações
-notifications_api.php oferece endpoints para contagem, listagem e marcação de notificações.
+Notifications
+notifications_api.php exposes endpoints to count, list, and mark notifications.
 
-Widgets (notifications_widget.php) e scripts (init_notifications.php) permitem integração em páginas.
+Widgets (notifications_widget.php) and scripts (init_notifications.php) enable page integration.
 
-Relatórios e Exportações
-Exportação de funcionários, turnos e registros em CSV.
+Reports and Exports
+Export employees, shifts, and records to CSV.
 
-Relatórios de desempenho (desempenho.php, relatorios.php).
+Performance reports (desempenho.php, relatorios.php).
 
-Utilitários
-Scripts Node para criação de apresentações PPTX (via pptxgenjs).
+Utilities
+Node scripts for building PPTX presentations (via pptxgenjs).
 
-Python para geração de montagens e conversão de slides em imagens.
+Python for creating montages and converting slides into images.
 
-Scripts Auxiliares
-Script	Uso Principal
-create_montage.py	Geração de montagens de imagens (pillow).
-pptx_to_img.py	Converte slides .pptx em imagens.
-slides_template.js	Modelo para gerar apresentações completas em PPTX.
-answer.js	Variante adaptável de slides_template.js.
+Helper Scripts
+Script  Primary Use
+create_montage.py       Generates image montages (Pillow).
+pptx_to_img.py  Converts .pptx slides into images.
+slides_template.js      Template for generating full PPTX presentations.
+answer.js       Adaptable variant of slides_template.js.
