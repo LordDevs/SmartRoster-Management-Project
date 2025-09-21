@@ -1,51 +1,51 @@
 <?php
-// notifications.php – página de listagem e leitura de notificações de usuário
-// Inclui o arquivo de configuração e verifica login
+// notifications.php – user notification listing and reading page
+// Includes configuration and verifies login
 require_once 'config.php';
 requireLogin();
 
 $userId = $_SESSION['user_id'];
 
-// Função local de fallback caso addNotification não esteja definida em config.php
+// Local fallback if addNotification is not defined in config.php
 if (!function_exists('addNotification')) {
     function addNotification($pdo, $userId, $message, $type = 'general', $sendEmail = false) {
         $stmt = $pdo->prepare('INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)');
         $stmt->execute([$userId, $message, $type]);
-        // Email opcional
+        // Optional email
         if ($sendEmail) {
-            // Buscar email do usuário
+            // Fetch user email
             $userStmt = $pdo->prepare('SELECT email, name FROM users JOIN employees ON users.employee_id = employees.id WHERE users.id = ?');
             $userStmt->execute([$userId]);
             $user = $userStmt->fetch(PDO::FETCH_ASSOC);
             if ($user) {
                 $to      = $user['email'];
-                $subject = 'Notificação Escala Hillbillys';
-                $body    = "Olá {$user['name']},\n\n{$message}\n\nEquipe Escala Hillbillys";
-                // Utilize mail() se configurado ou biblioteca externa
+                $subject = 'Escala Hillbillys Notification';
+                $body    = "Hello {$user['name']},\n\n{$message}\n\nEscala Hillbillys Team";
+                // Use mail() if configured or an external library
                 @mail($to, $subject, $body);
             }
         }
     }
 }
 
-// Tratar marcação como lida
+// Handle marking notifications as read
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notification_id'])) {
     $id = intval($_POST['notification_id']);
     $stmt = $pdo->prepare('UPDATE notifications SET status = "read" WHERE id = ? AND user_id = ?');
     $stmt->execute([$id, $userId]);
 }
 
-// Obter notificações do usuário
+// Fetch notifications for the user
 $stmt = $pdo->prepare('SELECT id, message, type, status, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC');
 $stmt->execute([$userId]);
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Notificações – Escala Hillbillys</title>
+    <title>Notifications – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -56,9 +56,9 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Notificações</h3>
+        <h3>Notifications</h3>
         <?php if (empty($notifications)): ?>
-            <p>Você não possui notificações no momento.</p>
+            <p>You do not have notifications right now.</p>
         <?php else: ?>
             <div class="list-group">
                 <?php foreach ($notifications as $n): ?>
@@ -71,7 +71,7 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php if ($n['status'] === 'unread'): ?>
                             <form method="post" style="margin:0;">
                                 <input type="hidden" name="notification_id" value="<?php echo $n['id']; ?>">
-                                <button type="submit" class="btn btn-sm btn-outline-success">Marcar como lida</button>
+                                <button type="submit" class="btn btn-sm btn-outline-success">Mark as read</button>
                             </form>
                         <?php endif; ?>
                     </div>

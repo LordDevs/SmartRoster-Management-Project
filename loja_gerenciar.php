@@ -1,33 +1,33 @@
 <?php
-// loja_gerenciar.php – permite que gerentes (e administradores) visualizem e atualizem informações da loja.
-// Gerentes podem editar apenas a própria loja; administradores poderiam, em uma versão estendida,
-// selecionar qual loja editar.  Também listamos os funcionários vinculados à loja.
+// loja_gerenciar.php – allow managers (and administrators) to view and update store information.
+// Managers may edit only their store; administrators could, in an extended version,
+// select which store to edit. Employees linked to the store are also listed.
 
 require_once 'config.php';
 requirePrivileged();
 
 $role = $_SESSION['user_role'];
 $currentUser = currentUser();
-// Determinar a loja atual
+// Determine the current store
 if ($role === 'manager') {
     $storeId = $currentUser['store_id'] ?? null;
 } else {
-    // Administradores podem escolher a loja via GET; se não fornecer, usar primeira loja
+    // Administrators may choose the store via GET; otherwise use the first store
     $storeId = isset($_GET['store_id']) ? (int)$_GET['store_id'] : null;
     if (!$storeId) {
         $storeId = $pdo->query('SELECT id FROM stores ORDER BY id LIMIT 1')->fetchColumn();
     }
 }
 
-// Carregar dados da loja
+// Load store data
 $stmtStore = $pdo->prepare('SELECT * FROM stores WHERE id = ?');
 $stmtStore->execute([$storeId]);
 $store = $stmtStore->fetch(PDO::FETCH_ASSOC);
 if (!$store) {
-    die('Loja não encontrada.');
+    die('Store not found.');
 }
 
-// Processar atualização de dados da loja
+// Process store updates
 $message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
@@ -35,27 +35,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($name !== '') {
         $stmtUpd = $pdo->prepare('UPDATE stores SET name = ?, location = ? WHERE id = ?');
         $stmtUpd->execute([$name, $location, $storeId]);
-        $message = 'Dados da loja atualizados com sucesso.';
+        $message = 'Store details updated successfully.';
         // Recarregar dados da loja
         $stmtStore->execute([$storeId]);
         $store = $stmtStore->fetch(PDO::FETCH_ASSOC);
     }
 }
 
-// Buscar funcionários da loja
+// Fetch store employees
 $stmtEmp = $pdo->prepare('SELECT id, name, email, phone FROM employees WHERE store_id = ? ORDER BY name');
 $stmtEmp->execute([$storeId]);
 $employees = $stmtEmp->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Gerenciar Loja – Escala Hillbillys</title>
+    <title>Manage Store – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <!-- DataTables CSS para tabela de funcionários -->
+    <!-- DataTables CSS for the employees table -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
 </head>
 <body>
@@ -67,49 +67,49 @@ $employees = $stmtEmp->fetchAll(PDO::FETCH_ASSOC);
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Funcionários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Escalas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Pontos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Relatórios</a></li>
-                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Desempenho</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="analytics.php">Métricas</a>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="loja_gerenciar.php">Loja</a></li>
+                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Employees</a></li>
+                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Schedules</a></li>
+                    <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Time Entries</a></li>
+                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Performance</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="analytics.php">Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="loja_gerenciar.php">Store</a></li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
+                    <li class="nav-item"><a class="nav-link" href="logout.php">Sign Out</a></li>
                 </ul>
             </div>
         </div>
     </nav>
     <div class="container mt-4">
-        <h3>Gerenciar Loja</h3>
+        <h3>Manage Store</h3>
         <?php if ($message): ?>
             <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
         <form method="post" class="mb-4">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Nome da Loja</label>
+                    <label class="form-label">Store Name</label>
                     <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($store['name']); ?>" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Localização</label>
+                    <label class="form-label">Location</label>
                     <input type="text" class="form-control" name="location" value="<?php echo htmlspecialchars($store['location']); ?>">
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </div>
         </form>
-        <h4>Funcionários da Loja</h4>
+        <h4>Store Employees</h4>
         <div class="table-responsive">
             <table id="employeesTable" class="table table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Telefone</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,7 +131,7 @@ $employees = $stmtEmp->fetchAll(PDO::FETCH_ASSOC);
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         $('#employeesTable').DataTable({
-            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json' },
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/en-GB.json' },
             order: [[1, 'asc']]
         });
     });

@@ -1,1 +1,1 @@
-<!-- item do sidebar: use a versão enviada anteriormente ou peça para eu recriar agora -->
+<!-- sidebar item: use the version sent earlier or ask me to recreate it now -->

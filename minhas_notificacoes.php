@@ -1,1 +1,1 @@
-<!-- minha página de notificações: use a versão enviada anteriormente ou peça para eu recriar agora -->
+<!-- my notifications page: use the version sent earlier or ask me to recreate it now -->

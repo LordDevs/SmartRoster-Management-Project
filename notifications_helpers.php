@@ -16,7 +16,7 @@ function addNotification(PDO $pdo, int $userId, string $message, string $type='g
     $stmt = $pdo->prepare('INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)');
     $stmt->execute([$userId, $message, $type]);
 }
-function formatShiftMsg(string $date, string $start, string $end, ?string $storeName=null, string $action='Atribuído'): string {
-    $storePart = $storeName ? " na loja $storeName" : '';
-    return "$action: $date das $start às $end$storePart.";
+function formatShiftMsg(string $date, string $start, string $end, ?string $storeName=null, string $action='Assigned'): string {
+    $storePart = $storeName ? " at store $storeName" : '';
+    return "$action: $date from $start to $end$storePart.";
 }

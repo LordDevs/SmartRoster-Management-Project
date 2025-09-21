@@ -40,11 +40,11 @@ for ($i = 6; $i >= 0; $i--) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Painel do Gerente – Escala Hillbillys</title>
+    <title>Manager Dashboard – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -60,34 +60,34 @@ for ($i = 6; $i >= 0; $i--) {
         <div class="row mb-4">
             <div class="col-md-4">
                 <div class="card text-white bg-success mb-3">
-                    <div class="card-header">Funcionários</div>
+                    <div class="card-header">Employees</div>
                     <div class="card-body">
                         <h5 class="card-title">Total: <?php echo $employeeCount; ?></h5>
-                        <p class="card-text">Número de funcionários nesta loja.</p>
+                        <p class="card-text">Number of employees in this store.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card text-white bg-info mb-3">
-                    <div class="card-header">Escalas Futuras</div>
+                    <div class="card-header">Upcoming Shifts</div>
                     <div class="card-body">
                         <h5 class="card-title">Total: <?php echo $shiftsCount; ?></h5>
-                        <p class="card-text">Turnos futuros para esta loja.</p>
+                        <p class="card-text">Future shifts scheduled for this store.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card text-white bg-warning mb-3">
-                    <div class="card-header">Horas no Mês</div>
+                    <div class="card-header">Hours This Month</div>
                     <div class="card-body">
                         <h5 class="card-title">Total: <?php echo $totalHours; ?> h</h5>
-                        <p class="card-text">Horas trabalhadas neste mês pelos funcionários da loja.</p>
+                        <p class="card-text">Hours worked this month by store employees.</p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="card">
-            <div class="card-header">Horas trabalhadas (últimos 7 dias)</div>
+            <div class="card-header">Hours Worked (Last 7 Days)</div>
             <div class="card-body">
                 <canvas id="hoursChart"></canvas>
             </div>
@@ -99,8 +99,8 @@ for ($i = 6; $i >= 0; $i--) {
     const ctx = document.getElementById('hoursChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
-        data: { labels: chartLabels, datasets: [{ label: 'Horas trabalhadas', data: chartData, backgroundColor: 'rgba(54,162,235,0.5)', borderColor: 'rgba(54,162,235,1)', borderWidth: 1 }] },
-        options: { scales: { y: { beginAtZero: true, title: { display: true, text: 'Horas' } }, x: { title: { display: true, text: 'Data' } } }, plugins: { legend: { display: false } } }
+        data: { labels: chartLabels, datasets: [{ label: 'Hours worked', data: chartData, backgroundColor: 'rgba(54,162,235,0.5)', borderColor: 'rgba(54,162,235,1)', borderWidth: 1 }] },
+        options: { scales: { y: { beginAtZero: true, title: { display: true, text: 'Hours' } }, x: { title: { display: true, text: 'Date' } } }, plugins: { legend: { display: false } } }
     });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

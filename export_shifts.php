@@ -1,5 +1,5 @@
 <?php
-// export_shifts.php – exportar escalas como CSV
+// export_shifts.php – export shift schedules as CSV
 require_once 'config.php';
 requireAdmin();
 
@@ -9,10 +9,10 @@ $stmt = $pdo->query('SELECT s.id, s.date, s.start_time, s.end_time, e.name AS em
 $shifts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 header('Content-Type: text/csv; charset=utf-8');
-header('Content-Disposition: attachment; filename="escalas.csv"');
+header('Content-Disposition: attachment; filename="shifts.csv"');
 $output = fopen('php://output', 'w');
 // CSV headers
-fputcsv($output, ['ID', 'Data', 'Início', 'Término', 'Funcionário', 'Criado em']);
+fputcsv($output, ['ID', 'Date', 'Start', 'End', 'Employee', 'Created at']);
 foreach ($shifts as $shift) {
     fputcsv($output, $shift);
 }

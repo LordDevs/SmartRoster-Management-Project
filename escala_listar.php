@@ -1,7 +1,7 @@
 <?php
 // escala_listar_future.php
-// Lista de escalas (turnos) futuras. Mostra apenas as escalas com data igual ou posterior à data atual.
-// Administradores veem todas as lojas; gerentes veem apenas sua loja.
+// List upcoming shifts. Shows only shifts dated today or later.
+// Administrators see every store; managers are limited to their store.
 
 require_once 'config.php';
 requirePrivileged();
@@ -9,7 +9,7 @@ $currentUser = currentUser();
 $role = $currentUser['role'];
 $storeId = $currentUser['store_id'] ?? null;
 
-// Obter escalas futuras
+// Fetch upcoming shifts
 if ($role === 'manager' && $storeId) {
     $stmt = $pdo->prepare('SELECT s.id, s.date, s.start_time, s.end_time, e.name AS employee_name
                            FROM shifts s
@@ -27,7 +27,7 @@ if ($role === 'manager' && $storeId) {
     $shifts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Buscar solicitações de troca pendentes (futuras apenas)
+// Fetch pending swap requests (upcoming only)
 if ($role === 'manager' && $storeId) {
     $swapStmt = $pdo->prepare('SELECT sr.id, sr.shift_id, sr.status, e1.name AS requester, e2.name AS requested_to
                                FROM swap_requests sr
@@ -50,11 +50,11 @@ if ($role === 'manager' && $storeId) {
 
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escalas Futuras – Escala Hillbillys</title>
+    <title>Upcoming Shifts – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -65,25 +65,25 @@ if ($role === 'manager' && $storeId) {
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Escalas Futuras</h3>
+        <h3>Upcoming Shifts</h3>
         <div class="d-flex mb-3">
-            <a href="export_shifts.php" class="btn btn-secondary me-2">Exportar CSV</a>
-            <a href="escala_criar.php" class="btn btn-success me-2">Nova Escala</a>
-            <a href="escala_criar.php?auto=1" class="btn btn-warning me-2">Gerar Automaticamente</a>
-            <a href="escala_sugestao.php" class="btn btn-info">Sugestão IA</a>
+            <a href="export_shifts.php" class="btn btn-secondary me-2">Export CSV</a>
+            <a href="escala_criar.php" class="btn btn-success me-2">New Shift</a>
+            <a href="escala_criar.php?auto=1" class="btn btn-warning me-2">Generate Automatically</a>
+            <a href="escala_sugestao.php" class="btn btn-info">AI Suggestion</a>
         </div>
-        <!-- Solicitações de troca -->
-        <h5>Solicitações de Troca:</h5>
+        <!-- Swap requests -->
+        <h5>Swap Requests:</h5>
         <?php if (empty($swapRequests)): ?>
-            <p>Nenhuma solicitação pendente.</p>
+            <p>No pending requests.</p>
         <?php else: ?>
             <ul class="list-group mb-4">
                 <?php foreach ($swapRequests as $sr): ?>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?php echo htmlspecialchars($sr['requester']) . ' deseja trocar com ' . htmlspecialchars($sr['requested_to']); ?>
+                        <?php echo htmlspecialchars($sr['requester']) . ' wants to swap with ' . htmlspecialchars($sr['requested_to']); ?>
                         <div>
-                            <a href="swap_action.php?id=<?php echo urlencode($sr['id']); ?>&action=approve" class="btn btn-sm btn-success ms-2">Aprovar</a>
-                            <a href="swap_action.php?id=<?php echo urlencode($sr['id']); ?>&action=reject" class="btn btn-sm btn-danger ms-1">Rejeitar</a>
+                            <a href="swap_action.php?id=<?php echo urlencode($sr['id']); ?>&action=approve" class="btn btn-sm btn-success ms-2">Approve</a>
+                            <a href="swap_action.php?id=<?php echo urlencode($sr['id']); ?>&action=reject" class="btn btn-sm btn-danger ms-1">Reject</a>
                         </div>
                     </li>
                 <?php endforeach; ?>
@@ -95,11 +95,11 @@ if ($role === 'manager' && $storeId) {
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Data</th>
-                        <th>Início</th>
-                        <th>Término</th>
-                        <th>Funcionário</th>
-                        <th>Ações</th>
+                        <th>Date</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Employee</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,9 +111,9 @@ if ($role === 'manager' && $storeId) {
                             <td><?php echo htmlspecialchars($shift['end_time']); ?></td>
                             <td><?php echo htmlspecialchars($shift['employee_name']); ?></td>
                             <td>
-                                <a href="escala_editar.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-primary">Editar</a>
-                                <a href="escala_excluir.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Excluir esta escala?');">Excluir</a>
-                                <a href="escala_trocar.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-warning">Troca</a>
+                                <a href="escala_editar.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-primary">Edit</a>
+                                <a href="escala_excluir.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this shift?');">Delete</a>
+                                <a href="escala_trocar.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-warning">Swap</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -127,7 +127,7 @@ if ($role === 'manager' && $storeId) {
     <script>
         $(document).ready(function() {
             $('#shiftsTable').DataTable({
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json' },
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/en-GB.json' },
                 order: [[1, 'asc'], [2, 'asc']]
             });
         });

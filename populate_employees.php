@@ -1,9 +1,9 @@
 <?php
-// populate_employees.php – script para popular o banco com 30 funcionários fictícios
+// populate_employees.php – script to seed the database with 30 sample employees
 require_once 'config.php';
 requireAdmin();
 
-// Arrays de nomes para combinar aleatoriamente
+// Name arrays for random pairing
 $firstNames = ['Aidan','Bridget','Ciaran','Deirdre','Eoin','Fiona','Grainne','Hugh','Ian','Jillian',
     'Kevin','Laura','Maeve','Niall','Orla','Padraig','Roisin','Seamus','Tara','Una',
     'Vaughan','Siobhan','Cathal','Darragh','Elaine','Fergal','Grainne','Isolde','Liam','Muireann'];
@@ -11,14 +11,14 @@ $lastNames  = ['O\'Connor','Murphy','Kelly','O\'Brien','Smith','Doyle','Byrne','
     'Kennedy','Lynch','McCarthy','Maher','Nolan','Power','Quinn','Reid','Sweeney','Ward',
     'Gallagher','Doran','Keane','Flynn','Moran','Brady','Hayes','Kavanagh','Moore','Clarke'];
 
-// Obter lojas existentes ou criar uma padrão se necessário
+// Fetch existing stores or create a default one if necessary
 $storeIds = $pdo->query('SELECT id FROM stores')->fetchAll(PDO::FETCH_COLUMN);
 if (!$storeIds) {
-    $pdo->exec("INSERT INTO stores (name, location) VALUES ('Loja Padrão','Localização Padrão')");
+    $pdo->exec("INSERT INTO stores (name, location) VALUES ('Default Store','Default Location')");
     $storeIds = [$pdo->lastInsertId()];
 }
 
-// Preparar inserção
+// Prepare insert statement
 $insert = $pdo->prepare('INSERT INTO employees (name, phone, email, store_id, ppsn, irp, hourly_rate) VALUES (?, ?, ?, ?, ?, ?, ?)');
 for ($i = 0; $i < 30; $i++) {
     $first = $firstNames[array_rand($firstNames)];
@@ -33,4 +33,4 @@ for ($i = 0; $i < 30; $i++) {
     $insert->execute([$name, $phone, $email, $store, $ppsn, $irp, $rate]);
 }
 
-echo '30 funcionários fictícios foram adicionados.';
+echo '30 sample employees were added.';

@@ -1,14 +1,14 @@
 <?php
 // escala_calendario_semana.php
-// Visualização de escalas em formato semanal. Exibe cada dia da semana corrente (ou de uma semana
-// selecionada via parâmetro) com os turnos listados em cartões. Fornece uma experiência mais
-// moderna e intuitiva em relação ao calendário interativo mensal, permitindo ao usuário
-// visualizar rapidamente quem está escalado em cada dia. Administradores veem todas as lojas;
-// gerentes veem apenas os turnos da sua loja.
+// Weekly shift visualization. Displays each day of the current week (or a selected week
+// via parameter) with shifts listed in cards. Provides a more modern and intuitive
+// experience compared to the monthly interactive calendar, letting users quickly
+// see who is scheduled each day. Administrators see every store; managers only see
+// shifts for their store.
 
 require_once 'config.php';
 
-// Verifica login e restringe acesso apenas a administradores ou gerentes
+// Verify login and restrict access to administrators or managers
 requireLogin();
 $currentUser = currentUser();
 if (!$currentUser || !in_array($currentUser['role'], ['admin','manager'])) {
@@ -16,15 +16,15 @@ if (!$currentUser || !in_array($currentUser['role'], ['admin','manager'])) {
     exit();
 }
 
-// Determina a semana a ser exibida. Aceita parâmetro GET 'week' no formato YYYY-MM-DD
-// representando qualquer dia da semana desejada. Se não houver, usa a data atual.
+// Determine which week to display. Accepts GET parameter 'week' in YYYY-MM-DD format
+// representing any day in the desired week. Defaults to today when absent.
 $weekParam = isset($_GET['week']) ? $_GET['week'] : date('Y-m-d');
 try {
     $refDate = new DateTime($weekParam);
 } catch (Exception $e) {
     $refDate = new DateTime();
 }
-// Ajusta para a segunda-feira da semana de referência (ISO 8601: Monday = 1)
+// Adjust to Monday of the reference week (ISO 8601: Monday = 1)
 $dayOfWeek = (int)$refDate->format('N');
 $monday     = clone $refDate;
 $monday->modify('-' . ($dayOfWeek - 1) . ' days');
@@ -33,7 +33,7 @@ $sunday->modify('+6 days');
 $dateStart  = $monday->format('Y-m-d');
 $dateEnd    = $sunday->format('Y-m-d');
 
-// Recupera turnos da semana conforme o papel do usuário
+// Fetch shifts for the week according to the user role
 $storeId = $currentUser['store_id'] ?? null;
 $events  = [];
 try {
@@ -57,7 +57,7 @@ try {
     $events = [];
 }
 
-// Organiza turnos por dia
+// Group shifts by day
 $shiftsByDay = [];
 for ($i = 0; $i < 7; $i++) {
     $date = clone $monday;
@@ -69,18 +69,18 @@ foreach ($events as $ev) {
     $shiftsByDay[$ev['date']][] = $ev;
 }
 
-// Função auxiliar para formatar data no padrão "Dia, DD de Mês"
+// Helper to format dates as "Day, DD Month"
 function formatDateLabel($dateStr) {
     $dt = DateTime::createFromFormat('Y-m-d', $dateStr);
-    $dias  = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-    $meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-    $diaSemana = $dias[(int)$dt->format('w')];
-    $dia       = $dt->format('d');
-    $mes       = $meses[(int)$dt->format('n') - 1];
-    return "$diaSemana, $dia de $mes";
+    $days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    $months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    $dayName = $days[(int)$dt->format('w')];
+    $day     = $dt->format('d');
+    $month   = $months[(int)$dt->format('n') - 1];
+    return "$dayName, $day $month";
 }
 
-// Calcula links para semana anterior e próxima semana
+// Calculate links for previous and next weeks
 $prevWeekDate = clone $monday;
 $prevWeekDate->modify('-7 days');
 $nextWeekDate = clone $monday;
@@ -89,11 +89,11 @@ $prevWeekParam = $prevWeekDate->format('Y-m-d');
 $nextWeekParam = $nextWeekDate->format('Y-m-d');
 
 ?><!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Escalas Semanais – Escala Hillbillys</title>
+    <title>Weekly Shifts – Escala Hillbillys</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -103,16 +103,16 @@ $nextWeekParam = $nextWeekDate->format('Y-m-d');
 </head>
 <body>
 <?php
-    // Define a página ativa como "calendario" para que o item Calendário seja destacado no menu
+    // Highlight the calendar item in the navbar
     $activePage = 'calendario';
     require_once __DIR__ . '/navbar.php';
 ?>
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Escalas – Semana de <?php echo htmlspecialchars($monday->format('d/m/Y')); ?> a <?php echo htmlspecialchars($sunday->format('d/m/Y')); ?></h3>
+        <h3>Shifts – Week of <?php echo htmlspecialchars($monday->format('d/m/Y')); ?> to <?php echo htmlspecialchars($sunday->format('d/m/Y')); ?></h3>
         <div>
-            <a href="?week=<?php echo urlencode($prevWeekParam); ?>" class="btn btn-outline-primary btn-sm me-2">&laquo; Semana Anterior</a>
-            <a href="?week=<?php echo urlencode($nextWeekParam); ?>" class="btn btn-outline-primary btn-sm">Próxima Semana &raquo;</a>
+            <a href="?week=<?php echo urlencode($prevWeekParam); ?>" class="btn btn-outline-primary btn-sm me-2">&laquo; Previous Week</a>
+            <a href="?week=<?php echo urlencode($nextWeekParam); ?>" class="btn btn-outline-primary btn-sm">Next Week &raquo;</a>
         </div>
     </div>
     <div class="row g-3">
@@ -124,7 +124,7 @@ $nextWeekParam = $nextWeekDate->format('Y-m-d');
                 </div>
                 <div class="card-body">
                     <?php if (empty($shifts)): ?>
-                        <p class="text-muted">Sem turnos</p>
+                        <p class="text-muted">No shifts</p>
                     <?php else: ?>
                         <ul class="list-unstyled">
                             <?php foreach ($shifts as $sh): ?>
@@ -132,9 +132,9 @@ $nextWeekParam = $nextWeekDate->format('Y-m-d');
                                 <strong><?php echo htmlspecialchars($sh['start_time']); ?>–<?php echo htmlspecialchars($sh['end_time']); ?></strong><br>
                                 <span><?php echo htmlspecialchars($sh['employee_name']); ?></span><br>
                                 <small>
-                                    <a href="escala_editar.php?id=<?php echo urlencode($sh['id']); ?>" class="text-decoration-none">Editar</a>
+                                    <a href="escala_editar.php?id=<?php echo urlencode($sh['id']); ?>" class="text-decoration-none">Edit</a>
                                     |
-                                    <a href="escala_excluir.php?id=<?php echo urlencode($sh['id']); ?>" class="text-danger text-decoration-none" onclick="return confirm('Excluir este turno?');">Excluir</a>
+                                    <a href="escala_excluir.php?id=<?php echo urlencode($sh['id']); ?>" class="text-danger text-decoration-none" onclick="return confirm('Delete this shift?');">Delete</a>
                                 </small>
                             </li>
                             <?php endforeach; ?>
@@ -146,8 +146,8 @@ $nextWeekParam = $nextWeekDate->format('Y-m-d');
         <?php endforeach; ?>
     </div>
     <div class="mt-4">
-        <a href="escala_criar.php" class="btn btn-success">Novo Turno</a>
-        <a href="escala_calendario.php" class="btn btn-outline-secondary ms-2">Ver Calendário Interativo</a>
+        <a href="escala_criar.php" class="btn btn-success">New Shift</a>
+        <a href="escala_calendario.php" class="btn btn-outline-secondary ms-2">View Interactive Calendar</a>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

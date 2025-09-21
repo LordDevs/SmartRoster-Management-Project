@@ -1,5 +1,5 @@
 <?php
-// portal.php – área do funcionário para visualizar escalas e pontos
+// portal.php – employee area to view shifts and time entries
 require_once 'config.php';
 requireLogin();
 
@@ -16,7 +16,7 @@ $stmt = $pdo->prepare('SELECT * FROM employees WHERE id = ?');
 $stmt->execute([$employeeId]);
 $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$employee) {
-    die('Funcionário não encontrado.');
+    die('Employee not found.');
 }
 
 // Handle register point if button clicked
@@ -31,12 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_point'])) {
         // Register clock out
         $stmt = $pdo->prepare('UPDATE time_entries SET clock_out = ? WHERE id = ?');
         $stmt->execute([$now, $openEntry['id']]);
-        $portalMessage = 'Saída registrada com sucesso.';
+        $portalMessage = 'Clock-out recorded successfully.';
     } else {
         // Register clock in
         $stmt = $pdo->prepare('INSERT INTO time_entries (employee_id, clock_in) VALUES (?, ?)');
         $stmt->execute([$employeeId, $now]);
-        $portalMessage = 'Entrada registrada com sucesso.';
+        $portalMessage = 'Clock-in recorded successfully.';
     }
 }
 
@@ -82,11 +82,11 @@ $hourlyRate = $employee['hourly_rate'] ?: 0;
 $earnings = $workedHours * $hourlyRate;
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Portal do Funcionário – Escala Hillbillys</title>
+    <title>Employee Portal – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -99,17 +99,17 @@ $earnings = $workedHours * $hourlyRate;
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="portal.php">Próximos Turnos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="preferencias.php">Preferências</a></li>
+                    <li class="nav-item"><a class="nav-link" href="portal.php">Upcoming Shifts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="preferencias.php">Preferences</a></li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
+                    <li class="nav-item"><a class="nav-link" href="logout.php">Sign Out</a></li>
                 </ul>
             </div>
         </div>
     </nav>
     <div class="container mt-4">
-        <h3>Bem-vindo(a), <?php echo htmlspecialchars($employee['name']); ?></h3>
+        <h3>Welcome, <?php echo htmlspecialchars($employee['name']); ?></h3>
         <?php if ($portalMessage): ?>
             <div class="alert alert-success"><?php echo htmlspecialchars($portalMessage); ?></div>
         <?php endif; ?>
@@ -122,10 +122,10 @@ $earnings = $workedHours * $hourlyRate;
                 $stmt->execute([$employeeId]);
                 $openEntry = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($openEntry) {
-                    $buttonLabel = 'Registrar Saída';
+                    $buttonLabel = 'Clock Out';
                     $buttonClass = 'btn-danger';
                 } else {
-                    $buttonLabel = 'Registrar Entrada';
+                    $buttonLabel = 'Clock In';
                     $buttonClass = 'btn-success';
                 }
                 ?>
@@ -134,25 +134,25 @@ $earnings = $workedHours * $hourlyRate;
         </div>
         <!-- Summary of weekly hours and earnings -->
         <div class="mb-4">
-            <h5>Horas da Semana</h5>
-            <p>Horas agendadas: <strong><?php echo number_format($scheduledHours, 2); ?></strong>h</p>
-            <p>Horas trabalhadas: <strong><?php echo number_format($workedHours, 2); ?></strong>h</p>
+            <h5>Weekly Hours</h5>
+            <p>Scheduled hours: <strong><?php echo number_format($scheduledHours, 2); ?></strong>h</p>
+            <p>Worked hours: <strong><?php echo number_format($workedHours, 2); ?></strong>h</p>
             <?php $progress = ($scheduledHours > 0) ? min(100, ($workedHours / $scheduledHours) * 100) : 0; ?>
             <div class="progress" style="height: 20px;">
                 <div class="progress-bar" role="progressbar" style="width: <?php echo $progress; ?>%;" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100">
                     <?php echo number_format($progress, 0); ?>%
                 </div>
             </div>
-            <p class="mt-2">Horas restantes: <strong><?php echo number_format($remainingHours, 2); ?></strong>h</p>
-            <p>Ganhos estimados esta semana: <strong>€<?php echo number_format($earnings, 2); ?></strong></p>
+            <p class="mt-2">Remaining hours: <strong><?php echo number_format($remainingHours, 2); ?></strong>h</p>
+            <p>Estimated earnings this week: <strong>€<?php echo number_format($earnings, 2); ?></strong></p>
         </div>
-        <h4>Próximos Turnos</h4>
+        <h4>Upcoming Shifts</h4>
         <table class="table table-striped mb-4">
             <thead>
                 <tr>
-                    <th>Data</th>
-                    <th>Início</th>
-                    <th>Término</th>
+                    <th>Date</th>
+                    <th>Start</th>
+                    <th>End</th>
                 </tr>
             </thead>
             <tbody>
@@ -164,17 +164,17 @@ $earnings = $workedHours * $hourlyRate;
                     </tr>
                 <?php endforeach; ?>
                 <?php if (empty($upcomingShifts)): ?>
-                    <tr><td colspan="3">Nenhum turno futuro.</td></tr>
+                    <tr><td colspan="3">No upcoming shifts.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
-        <h4>Últimos Registros de Ponto</h4>
+        <h4>Recent Time Entries</h4>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Entrada</th>
-                    <th>Saída</th>
-                    <th>Duração (h)</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Duration (h)</th>
                 </tr>
             </thead>
             <tbody>
@@ -194,7 +194,7 @@ $earnings = $workedHours * $hourlyRate;
                     </tr>
                 <?php endforeach; ?>
                 <?php if (empty($timeEntries)): ?>
-                    <tr><td colspan="3">Nenhum registro de ponto.</td></tr>
+                    <tr><td colspan="3">No time entries.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>

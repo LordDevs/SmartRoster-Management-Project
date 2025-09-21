@@ -1,5 +1,5 @@
 <?php
-// Versão aprimorada do calendário interativo com correção de sobreposição da tela cinza após salvar
+// Enhanced interactive calendar with corrected backdrop overlap after saving
 require_once 'config.php';
 requireLogin();
 $user = currentUser();
@@ -39,10 +39,10 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Calendário Interativo – Escala Hillbillys</title>
+    <title>Interactive Calendar – Escala Hillbillys</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
@@ -55,36 +55,36 @@ try {
     require_once __DIR__ . '/navbar.php';
 ?>
 <div class="container">
-  <h3 class="mb-3">Calendário Interativo</h3>
+  <h3 class="mb-3">Interactive Calendar</h3>
   <div id="calendar"></div>
 </div>
-<!-- Modal de turno-->
+<!-- Shift modal -->
 <div class="modal fade" id="shiftModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Turno</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        <h5 class="modal-title">Shift</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form id="shiftForm">
           <input type="hidden" id="shift-id" name="shift_id" />
           <div class="mb-3">
-            <label class="form-label">Data</label>
+            <label class="form-label">Date</label>
             <input type="date" id="shift-date" name="date" class="form-control" readonly required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Horário de início</label>
+            <label class="form-label">Start time</label>
             <input type="time" id="shift-start" name="start_time" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Horário de término</label>
+            <label class="form-label">End time</label>
             <input type="time" id="shift-end" name="end_time" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Funcionário</label>
+            <label class="form-label">Employee</label>
             <select id="shift-employee" name="employee_id" class="form-select" required>
-              <option value="">Selecione…</option>
+              <option value="">Select…</option>
               <?php foreach ($employeesList as $emp): ?>
                 <option value="<?php echo $emp['id']; ?>"><?php echo htmlspecialchars($emp['name']); ?></option>
               <?php endforeach; ?>
@@ -93,26 +93,26 @@ try {
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-        <button type="button" class="btn btn-primary" id="save-btn">Salvar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="save-btn">Save</button>
       </div>
     </div>
   </div>
 </div>
-<!-- Modal de exclusão-->
+<!-- Delete modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Confirmar Exclusão</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        <h5 class="modal-title">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p id="delete-info"></p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="delete-btn">Excluir</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="delete-btn">Delete</button>
       </div>
     </div>
   </div>
@@ -143,14 +143,14 @@ async function submitShift(calendar) {
     const res = await fetch(url, { method:'POST', body: fd });
     const data = await res.json();
     if (!data.success) {
-      alert(data.message || 'Erro ao salvar.');
+      alert(data.message || 'Error saving.');
     }
-    // Em qualquer caso (sucesso ou erro) feche o modal e limpe backdrop
+    // Regardless of success or failure, close the modal and clear the backdrop
     bootstrap.Modal.getInstance(document.getElementById('shiftModal')).hide();
     clearBackdrops();
     calendar.refetchEvents();
   } catch (e) {
-    alert('Falha na comunicação.');
+    alert('Communication failed.');
     bootstrap.Modal.getInstance(document.getElementById('shiftModal')).hide();
     clearBackdrops();
   }
@@ -161,12 +161,12 @@ async function removeShift(calendar, shiftId) {
   try {
     const res = await fetch('delete_shift.php', { method:'POST', body: fd });
     const data = await res.json();
-    if (!data.success) alert(data.message || 'Erro ao excluir.');
+    if (!data.success) alert(data.message || 'Error deleting.');
     bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
     clearBackdrops();
     calendar.refetchEvents();
   } catch (e) {
-    alert('Falha na comunicação.');
+    alert('Communication failed.');
     bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
     clearBackdrops();
   }
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,timeGridWeek,timeGridDay' },
-    locale: 'pt-br',
+    locale: 'en-gb',
     selectable: <?php echo ($user['role'] === 'admin' || $user['role'] === 'manager') ? 'true' : 'false'; ?>,
     editable: <?php echo ($user['role'] === 'admin' || $user['role'] === 'manager') ? 'true' : 'false'; ?>,
     events: <?php echo json_encode($events, JSON_UNESCAPED_UNICODE); ?>,
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (ev.extendedProps && ev.extendedProps.employee_id) {
         document.getElementById('shift-employee').value = ev.extendedProps.employee_id;
       }
-      // configurar exclusão
+      // configure deletion
       document.getElementById('delete-info').textContent = `${ev.title} - ${ev.start.toLocaleString()}`;
       document.getElementById('delete-btn').onclick = function() { removeShift(calendar, ev.id); };
       new bootstrap.Modal(document.getElementById('deleteModal')).show();
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const res = await fetch('update_shift.php', { method:'POST', body: fd });
         const data = await res.json();
         if (!data.success) {
-          alert(data.message || 'Erro ao mover turno');
+          alert(data.message || 'Error moving shift');
           info.revert();
         }
       })();
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const res = await fetch('update_shift.php', { method:'POST', body: fd });
         const data = await res.json();
         if (!data.success) {
-          alert(data.message || 'Erro ao redimensionar turno');
+          alert(data.message || 'Error resizing shift');
           info.revert();
         }
       })();

@@ -1,5 +1,5 @@
 <?php
-// export_performance.php – exporta relatório de desempenho em CSV
+// export_performance.php – export performance report as CSV
 require_once 'config.php';
 requirePrivileged();
 
@@ -40,7 +40,7 @@ header('Content-Type: text/csv');
 header('Content-Disposition: attachment; filename="performance.csv"');
 $output = fopen('php://output', 'w');
 // Header row
-fputcsv($output, ['Funcionário', 'Horas Totais', 'Total de Registros', 'Entradas Completadas', 'Registros com Justificativa']);
+fputcsv($output, ['Employee', 'Total Hours', 'Total Entries', 'Completed Entries', 'Entries with Justification']);
 foreach ($data as $row) {
     $hours = round(($row['seconds_worked'] ?? 0) / 3600, 2);
     fputcsv($output, [

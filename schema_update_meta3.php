@@ -8,7 +8,7 @@ require_once 'config.php';
 
 // Only allow admins to run this script
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
-    die('Acesso negado. Apenas administradores podem executar a atualização do esquema.');
+    die('Access denied. Only administrators can run the schema update.');
 }
 
 try {
@@ -18,10 +18,10 @@ try {
     if (!in_array('max_weekly_hours', $columns)) {
         // Add max_weekly_hours column with default value 40 hours
         $pdo->exec("ALTER TABLE employees ADD COLUMN max_weekly_hours REAL DEFAULT 40.0");
-        echo 'Coluna max_weekly_hours adicionada com sucesso.';
+        echo 'Column max_weekly_hours added successfully.';
     } else {
-        echo 'A coluna max_weekly_hours já existe. Nenhuma alteração necessária.';
+        echo 'Column max_weekly_hours already exists. No changes needed.';
     }
 } catch (Exception $e) {
-    echo 'Erro ao atualizar o esquema: ' . $e->getMessage();
+    echo 'Error updating schema: ' . $e->getMessage();
 }
