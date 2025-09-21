@@ -6,15 +6,15 @@
  * administrator and manager pages. To use it, each page should set
  * `$activePage` to one of the following values before including this file:
  *
- *   'usuarios'    => Funcionários
- *   'escalas'     => Escalas
- *   'calendario'  => Calendário
- *   'pontos'      => Pontos
- *   'relatorios'  => Relatórios
- *   'desempenho'  => Desempenho
- *   'metricas'    => Métricas (Analytics)
- *   'lojas'       => Lojas (admin)
- *   'loja'        => Loja (manager)
+ *   'usuarios'    => Employees
+ *   'escalas'     => Schedules
+ *   'calendario'  => Calendar
+ *   'pontos'      => Time Entries
+ *   'relatorios'  => Reports
+ *   'desempenho'  => Performance
+ *   'metricas'    => Analytics
+ *   'lojas'       => Stores (admin)
+ *   'loja'        => Store (manager)
  *
  * The file determines the current user's role (admin, manager, employee)
  * using the helper currentUser() from config.php if available. It falls
@@ -33,7 +33,7 @@ if (function_exists('currentUser')) {
 // Determine brand link based on role
 if ($role === 'manager') {
     $brandHref = 'manager_dashboard.php';
-    $brandText = 'Escala Hillbillys – Gerente';
+    $brandText = 'Escala Hillbillys – Manager';
 } elseif ($role === 'employee') {
     // Employees should not normally include this nav; but default to portal
     $brandHref = 'portal.php';
@@ -57,45 +57,45 @@ if (!function_exists('nav_active')) {
         <a class="navbar-brand" href="<?php echo htmlspecialchars($brandHref); ?>">
             <?php echo htmlspecialchars($brandText); ?>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegação">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('usuarios', $activePage); ?>" href="usuarios_listar.php">Funcionários</a>
+                    <a class="nav-link <?php echo nav_active('usuarios', $activePage); ?>" href="usuarios_listar.php">Employees</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo nav_active('escalas', $activePage); ?>" href="escala_listar.php">Escalas</a>
                 </li>
                 <li class="nav-item">
-                    <!-- O item "Calendário" agora aponta para a visualização semanal recém-criada -->
-                    <a class="nav-link <?php echo nav_active('calendario', $activePage); ?>" href="escala_calendario_semana.php">Calendário</a>
+                    <!-- The "Calendar" item now points to the weekly view -->
+                    <a class="nav-link <?php echo nav_active('calendario', $activePage); ?>" href="escala_calendario_semana.php">Calendar</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('pontos', $activePage); ?>" href="ponto_listar.php">Pontos</a>
+                    <a class="nav-link <?php echo nav_active('pontos', $activePage); ?>" href="ponto_listar.php">Time Entries</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('relatorios', $activePage); ?>" href="relatorios.php">Relatórios</a>
+                    <a class="nav-link <?php echo nav_active('relatorios', $activePage); ?>" href="relatorios.php">Reports</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('desempenho', $activePage); ?>" href="desempenho.php">Desempenho</a>
+                    <a class="nav-link <?php echo nav_active('desempenho', $activePage); ?>" href="desempenho.php">Performance</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('metricas', $activePage); ?>" href="analytics.php">Métricas</a>
+                    <a class="nav-link <?php echo nav_active('metricas', $activePage); ?>" href="analytics.php">Analytics</a>
                 </li>
                 <?php if ($role === 'admin'): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('lojas', $activePage); ?>" href="lojas_listar.php">Lojas</a>
+                    <a class="nav-link <?php echo nav_active('lojas', $activePage); ?>" href="lojas_listar.php">Stores</a>
                 </li>
                 <?php elseif ($role === 'manager'): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo nav_active('loja', $activePage); ?>" href="loja_gerenciar_updated.php">Loja</a>
+                    <a class="nav-link <?php echo nav_active('loja', $activePage); ?>" href="loja_gerenciar_updated.php">Store</a>
                 </li>
                 <?php endif; ?>
             </ul>
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
+                <li class="nav-item"><a class="nav-link" href="logout.php">Sign Out</a></li>
             </ul>
         </div>
     </div>

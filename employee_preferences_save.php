@@ -8,7 +8,7 @@ if (!$funcionario_id) {
     exit;
 }
 
-// Atualiza limites semanais e salário por hora
+// Update weekly limits and hourly rate
 $weekly_max_hours = isset($_POST['weekly_max_hours']) ? floatval($_POST['weekly_max_hours']) : 40;
 $hourly_rate      = isset($_POST['hourly_rate'])      ? floatval($_POST['hourly_rate'])      : 0;
 $stmt = $conn->prepare('UPDATE funcionarios SET weekly_max_hours = ?, hourly_rate = ? WHERE id = ?');
@@ -16,7 +16,7 @@ $stmt->bind_param('ddi', $weekly_max_hours, $hourly_rate, $funcionario_id);
 $stmt->execute();
 $stmt->close();
 
-// Preferências por dia
+// Daily preferences
 $preferences = $_POST['preferences'] ?? [];
 for ($d = 0; $d < 7; $d++) {
     $pref = $preferences[$d] ?? [];
@@ -27,14 +27,14 @@ for ($d = 0; $d < 7; $d++) {
 
     $isEmpty = empty($available_start) && empty($available_end) && empty($max_hours) && empty($min_rest);
     if ($isEmpty) {
-        // Remove preferência existente
+        // Remove existing preference
         $del = $conn->prepare('DELETE FROM employee_preferences WHERE funcionario_id = ? AND day_of_week = ?');
         $del->bind_param('ii', $funcionario_id, $d);
         $del->execute();
         $del->close();
         continue;
     }
-    // Insere ou atualiza
+    // Insert or update preference
     $sql = 'INSERT INTO employee_preferences (funcionario_id, day_of_week, available_start, available_end, max_hours_per_day, min_rest_hours) VALUES (?,?,?,?,?,?) '
          . 'ON DUPLICATE KEY UPDATE available_start=VALUES(available_start), available_end=VALUES(available_end), max_hours_per_day=VALUES(max_hours_per_day), min_rest_hours=VALUES(min_rest_hours)';
     $ins = $conn->prepare($sql);

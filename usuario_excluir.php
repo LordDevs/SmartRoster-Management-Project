@@ -1,5 +1,5 @@
 <?php
-// usuario_excluir.php – excluir um funcionário
+// usuario_excluir.php – delete an employee
 require_once 'config.php';
 // Only admins and managers can delete employees
 requirePrivileged();

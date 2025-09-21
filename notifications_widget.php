@@ -3,17 +3,17 @@ require_once 'config.php';
 requireLogin();
 ?>
 <li class="nav-item dropdown">
-  <a class="nav-link position-relative" href="#" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notificações">
+  <a class="nav-link position-relative" href="#" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
     <span style="font-size:1.25rem;">🔔</span>
     <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
   </a>
   <div class="dropdown-menu dropdown-menu-end p-0 shadow" aria-labelledby="notifDropdown" style="min-width:320px;">
     <div class="list-group list-group-flush" id="notifList">
-      <div class="p-3 text-muted small">Carregando...</div>
+      <div class="p-3 text-muted small">Loading...</div>
     </div>
     <div class="d-flex justify-content-between p-2 border-top">
-      <button class="btn btn-sm btn-outline-secondary" id="notifRefreshBtn" type="button">Atualizar</button>
-      <button class="btn btn-sm btn-primary" id="notifMarkAllBtn" type="button">Marcar todas como lidas</button>
+      <button class="btn btn-sm btn-outline-secondary" id="notifRefreshBtn" type="button">Refresh</button>
+      <button class="btn btn-sm btn-primary" id="notifMarkAllBtn" type="button">Mark all as read</button>
     </div>
   </div>
 </li>
@@ -28,18 +28,18 @@ requireLogin();
     }catch(e){}
   }
   async function loadList(){
-    const listEl=document.getElementById('notifList'); listEl.innerHTML='<div class="p-3 text-muted small">Carregando...</div>';
+    const listEl=document.getElementById('notifList'); listEl.innerHTML='<div class="p-3 text-muted small">Loading...</div>';
     try{
       const data=await fetchJSON('notifications_api.php?action=list&limit=10');
-      if(!data.success){ listEl.innerHTML='<div class="p-3 text-danger small">Falha ao carregar.</div>'; return; }
-      if(!data.items||data.items.length===0){ listEl.innerHTML='<div class="p-3 text-muted small">Sem notificações.</div>'; return; }
+      if(!data.success){ listEl.innerHTML='<div class="p-3 text-danger small">Failed to load.</div>'; return; }
+      if(!data.items||data.items.length===0){ listEl.innerHTML='<div class="p-3 text-muted small">No notifications.</div>'; return; }
       listEl.innerHTML='';
       data.items.forEach(item=>{
         const a=document.createElement('a'); a.href='#'; a.className='list-group-item list-group-item-action d-flex justify-content-between align-items-start';
         a.innerHTML='<div class="me-2">'
           + '<div class="fw-semibold ' + (item.status==='unread'?'text-primary':'') + '">' + escapeHtml(item.message) + '</div>'
           + '<div class="small text-muted">' + escapeHtml(item.created_at) + '</div>'
-          + '</div>' + (item.status==='unread'?'<span class="badge bg-primary rounded-pill">novo</span>':'');
+          + '</div>' + (item.status==='unread'?'<span class="badge bg-primary rounded-pill">new</span>':'');
         a.addEventListener('click', async (ev)=>{
           ev.preventDefault();
           if(item.status==='unread'){
@@ -50,7 +50,7 @@ requireLogin();
         });
         listEl.appendChild(a);
       });
-    }catch(e){ listEl.innerHTML='<div class="p-3 text-danger small">Erro ao carregar.</div>'; }
+    }catch(e){ listEl.innerHTML='<div class="p-3 text-danger small">Error loading.</div>'; }
   }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   document.addEventListener('DOMContentLoaded',function(){

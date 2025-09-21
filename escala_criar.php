@@ -1,5 +1,5 @@
 <?php
-// escala_criar.php – criar, editar ou excluir escalas (turnos)
+// escala_criar.php – create, edit, or delete shifts
 require_once 'config.php';
 // Only allow managers and admins to create, edit or delete shifts. Employees should not access this page.
 requirePrivileged();
@@ -9,7 +9,7 @@ $currentRole = $_SESSION['user_role'];
 // Handle delete action
 if (isset($_GET['delete'])) {
     $deleteId = (int)$_GET['delete'];
-    // Before deleting, ensure the user has permission.  Managers can only delete shifts in their store.
+    // Before deleting, ensure the user has permission. Managers can only delete shifts in their store.
     if ($currentRole === 'manager') {
         $user = currentUser();
         // Join to find the store of the shift's employee
@@ -79,24 +79,24 @@ if (isset($_GET['auto'])) {
                 $rotated[] = $empHours[($startIndex + $i) % $numEmps]['employee'];
             }
             foreach ($rotated as $emp) {
-                // Verificar preferências de disponibilidade
+                // Check availability preferences
                 $prefStmt->execute([$emp['id'], $dayOfWeek]);
                 $pref = $prefStmt->fetch(PDO::FETCH_ASSOC);
                 if ($pref) {
                     if (strcmp($startTime, $pref['available_start_time']) < 0 || strcmp($endTime, $pref['available_end_time']) > 0) {
-                        // Horário proposto fora da faixa de preferência, pular este funcionário
+                        // Proposed time outside preference window; skip this employee
                         continue;
                     }
                 }
-                // Verificar se já existe turno para o funcionário na mesma data (evita sobreposição)
+                // Check whether the employee already has a shift on the same date (avoid overlap)
                 $checkStmt = $pdo->prepare('SELECT COUNT(*) FROM shifts WHERE employee_id = ? AND date = ?');
                 $checkStmt->execute([$emp['id'], $date]);
                 $existing = $checkStmt->fetchColumn();
                 if ($existing > 0) {
-                    // Já existe um turno para este funcionário neste dia, pular
+                    // A shift already exists for this employee on that day; skip
                     continue;
                 }
-                // Inserir turno se não houver conflito e estiver dentro das preferências
+                // Insert shift when there is no conflict and preferences are satisfied
                 $stmt = $pdo->prepare('INSERT INTO shifts (employee_id, date, start_time, end_time) VALUES (?, ?, ?, ?)');
                 $stmt->execute([$emp['id'], $date, $startTime, $endTime]);
             }
@@ -107,40 +107,40 @@ if (isset($_GET['auto'])) {
     // Show confirmation form for auto generation
     ?>
     <!DOCTYPE html>
-    <html lang="pt-BR">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Gerar Escalas Automaticamente</title>
+        <title>Generate Shifts Automatically</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
         <?php
-            // usar navbar padrão para escalar
+            // Use the standard navbar for schedules
             $activePage = 'escalas';
             require_once __DIR__ . '/navbar.php';
         ?>
         <div class="container mt-4">
-            <h3>Gerar Escalas Automaticamente</h3>
-            <p>Preencha os horários padrão para gerar escalas para todos os funcionários nos próximos dias.</p>
+            <h3>Generate Shifts Automatically</h3>
+            <p>Fill in default hours to generate shifts for every employee over the coming days.</p>
             <form method="post">
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label class="form-label">Horário de Início</label>
+                        <label class="form-label">Start Time</label>
                         <input type="time" class="form-control" name="start_time" value="09:00" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Horário de Término</label>
+                        <label class="form-label">End Time</label>
                         <input type="time" class="form-control" name="end_time" value="17:00" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Dias a gerar</label>
+                        <label class="form-label">Days to Generate</label>
                         <input type="number" class="form-control" name="days" value="7" min="1" max="30">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-success">Gerar</button>
-                <a href="escala_listar.php" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-success">Generate</button>
+                <a href="escala_listar.php" class="btn btn-secondary">Cancel</a>
             </form>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -194,11 +194,11 @@ if (isset($_GET['edit'])) {
     // Display edit form
     ?>
     <!DOCTYPE html>
-    <html lang="pt-BR">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Editar Escala</title>
+        <title>Edit Shift</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     </head>
     <body>
@@ -207,23 +207,23 @@ if (isset($_GET['edit'])) {
             require_once __DIR__ . '/navbar.php';
         ?>
         <div class="container mt-4">
-            <h3>Editar Escala</h3>
+            <h3>Edit Shift</h3>
             <form method="post">
                 <div class="row g-3 mb-3">
                     <div class="col-md-3">
-                        <label class="form-label">Data</label>
+                        <label class="form-label">Date</label>
                         <input type="date" class="form-control" name="date" value="<?php echo htmlspecialchars($shift['date']); ?>" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Início</label>
+                        <label class="form-label">Start</label>
                         <input type="time" class="form-control" name="start_time" value="<?php echo htmlspecialchars($shift['start_time']); ?>" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Término</label>
+                        <label class="form-label">End</label>
                         <input type="time" class="form-control" name="end_time" value="<?php echo htmlspecialchars($shift['end_time']); ?>" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Funcionário</label>
+                        <label class="form-label">Employee</label>
                         <select class="form-select" name="employee_id" required>
                             <?php foreach ($employees as $emp): ?>
                                 <option value="<?php echo $emp['id']; ?>" <?php if ($emp['id'] == $shift['employee_id']) echo 'selected'; ?>><?php echo htmlspecialchars($emp['name']); ?></option>
@@ -231,8 +231,8 @@ if (isset($_GET['edit'])) {
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a href="escala_listar.php" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="escala_listar.php" class="btn btn-secondary">Cancel</a>
             </form>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -285,11 +285,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Show creation form
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Nova Escala – Escala Hillbillys</title>
+    <title>New Shift – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -299,33 +299,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Nova Escala</h3>
+        <h3>New Shift</h3>
         <form method="post">
             <div class="row g-3 mb-3">
                 <div class="col-md-3">
-                    <label class="form-label">Data</label>
+                    <label class="form-label">Date</label>
                     <input type="date" class="form-control" name="date" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Início</label>
+                    <label class="form-label">Start</label>
                     <input type="time" class="form-control" name="start_time" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Término</label>
+                    <label class="form-label">End</label>
                     <input type="time" class="form-control" name="end_time" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Funcionários</label>
+                    <label class="form-label">Employees</label>
                     <select class="form-select" name="employee_ids[]" multiple required>
                         <?php foreach ($employees as $emp): ?>
                             <option value="<?php echo $emp['id']; ?>"><?php echo htmlspecialchars($emp['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <small class="text-muted">Use Ctrl/Command para selecionar múltiplos.</small>
+                    <small class="text-muted">Use Ctrl/Command to select multiple.</small>
                 </div>
             </div>
-            <button type="submit" class="btn btn-success">Criar</button>
-            <a href="escala_listar.php" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-success">Create</button>
+            <a href="escala_listar.php" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

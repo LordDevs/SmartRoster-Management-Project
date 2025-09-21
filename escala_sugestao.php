@@ -1,12 +1,12 @@
 <?php
-// escala_sugestao.php – geração de sugestões de escalas com heurísticas e preferências de disponibilidade.
-// Esta página permite a gerentes e administradores gerar turnos sugeridos considerando as horas
-// trabalhadas recentemente e as preferências de disponibilidade dos funcionários.
+// escala_sugestao.php – generate shift suggestions using heuristics and availability preferences.
+// Managers and administrators can produce suggested shifts based on recent hours worked
+// and employee availability preferences.
 
 require_once 'config.php';
 requirePrivileged();
 
-// Determinar o papel e a loja (caso seja gerente)
+// Determine role and store (when manager)
 $role = $_SESSION['user_role'];
 $currentUser = currentUser();
 $storeId = null;
@@ -14,11 +14,11 @@ if ($role === 'manager') {
     $storeId = $currentUser['store_id'] ?? null;
 }
 
-// Aplicar sugestões salvas na sessão (se solicitado)
+// Apply saved suggestions from the session when requested
 if (isset($_GET['apply']) && $_GET['apply'] === '1' && isset($_SESSION['shift_suggestions'])) {
     $suggestions = $_SESSION['shift_suggestions'];
     foreach ($suggestions as $sug) {
-        // Se for gerente, inserir apenas turnos de funcionários da sua loja
+        // Managers can only insert shifts for employees in their store
         if ($role === 'manager' && $storeId !== null) {
             $stmtCheck = $pdo->prepare('SELECT store_id FROM employees WHERE id = ?');
             $stmtCheck->execute([$sug['employee_id']]);
@@ -36,11 +36,11 @@ if (isset($_GET['apply']) && $_GET['apply'] === '1' && isset($_SESSION['shift_su
 }
 
 /**
- * Calcular as horas trabalhadas nos últimos 7 dias para um funcionário.
+ * Calculate hours worked in the last 7 days for an employee.
  *
  * @param PDO $pdo
  * @param int $employeeId
- * @return float Horas trabalhadas
+ * @return float Hours worked
  */
 function computeHoursLast7Days(PDO $pdo, int $employeeId): float
 {
@@ -55,10 +55,10 @@ function computeHoursLast7Days(PDO $pdo, int $employeeId): float
 }
 
 /**
- * Obter um mapa de preferências de disponibilidade por funcionário e dia da semana.
+ * Build a map of availability preferences per employee and weekday.
  *
  * @param PDO $pdo
- * @return array Estrutura [employee_id][day_of_week] => ['start' => HH:MM, 'end' => HH:MM]
+ * @return array Structure [employee_id][day_of_week] => ['start' => HH:MM, 'end' => HH:MM]
  */
 function fetchEmployeePreferencesMap(PDO $pdo): array
 {
@@ -74,13 +74,13 @@ function fetchEmployeePreferencesMap(PDO $pdo): array
 
 $suggestions = [];
 
-// Se o formulário foi enviado para gerar sugestões
+// Handle form submission to generate suggestions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_suggestion'])) {
     $start_time = $_POST['start_time'] ?? '09:00';
     $end_time   = $_POST['end_time'] ?? '17:00';
     $days       = max(1, min(30, (int)($_POST['days'] ?? 7)));
 
-    // Buscar funcionários (apenas da loja, se gerente)
+    // Fetch employees (limited to the store when manager)
     if ($role === 'manager') {
         $stmtEmp = $pdo->prepare('SELECT id, name FROM employees WHERE store_id = ? ORDER BY name');
         $stmtEmp->execute([$storeId]);
@@ -89,35 +89,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_suggestion']
         $employees = $pdo->query('SELECT id, name FROM employees ORDER BY name')->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Calcular horas trabalhadas por funcionário nos últimos 7 dias
+    // Calculate hours worked per employee over the last 7 days
     $empData = [];
     foreach ($employees as $emp) {
         $hours = computeHoursLast7Days($pdo, (int)$emp['id']);
         $empData[] = ['id' => (int)$emp['id'], 'name' => $emp['name'], 'hours' => $hours];
     }
-    // Ordenar do menor para o maior número de horas trabalhadas
+    // Sort ascending by hours worked
     usort($empData, function ($a, $b) {
         return $a['hours'] <=> $b['hours'];
     });
 
-    // Mapa de preferências de disponibilidade
+    // Availability preferences map
     $prefsMap = fetchEmployeePreferencesMap($pdo);
 
-    // Gerar sugestões ciclando pelos funcionários para cada dia. Para balancear, rotacionar o início da lista conforme o dia.
+    // Generate suggestions by cycling through employees each day, rotating the starting point for balance.
     $startDate = date('Y-m-d');
     $numEmps = count($empData);
     for ($d = 0; $d < $days; $d++) {
         $date = date('Y-m-d', strtotime("$startDate +{$d} day"));
-        $dayOfWeek = (int)date('w', strtotime($date)); // 0=Domingo ... 6=Sábado
-        // Calcular índice inicial para este dia para rodar a lista de funcionários
+        $dayOfWeek = (int)date('w', strtotime($date)); // 0=Sunday ... 6=Saturday
+        // Calculate the starting index for this day to rotate the employee list
         $startIndex = ($numEmps > 0) ? ($d % $numEmps) : 0;
         for ($i = 0; $i < $numEmps; $i++) {
             $emp = $empData[($startIndex + $i) % $numEmps];
             $empId = $emp['id'];
-            // Verificar preferência de disponibilidade para este funcionário/dia
+            // Check availability preference for this employee/day
             $pref = $prefsMap[$empId][$dayOfWeek] ?? null;
             if ($pref) {
-                // Se o horário do turno estiver fora do intervalo disponível, pula
+                // Skip when the shift falls outside the available window
                 if (strcmp($start_time, $pref['start']) < 0 || strcmp($end_time, $pref['end']) > 0) {
                     continue;
                 }
@@ -131,58 +131,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_suggestion']
             ];
         }
     }
-    // Salvar na sessão para aplicação posterior
+    // Save in the session for later application
     $_SESSION['shift_suggestions'] = $suggestions;
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sugestão Inteligente de Escala – Escala Hillbillys</title>
+    <title>Smart Shift Suggestions – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <?php
-        // Sugestão de escalas pertence à área de escalas
+        // Shift suggestions live within the schedules area
         $activePage = 'escalas';
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Sugestão de Escalas (IA/Heurística)</h3>
+        <h3>Shift Suggestions (AI/Heuristic)</h3>
         <?php if (empty($suggestions)): ?>
-            <p>Insira os parâmetros abaixo para gerar sugestões de escalas considerando as horas trabalhadas e as preferências de disponibilidade dos funcionários.</p>
+            <p>Enter the parameters below to generate shift suggestions that consider worked hours and availability preferences.</p>
             <form method="post">
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label class="form-label">Horário de Início</label>
+                        <label class="form-label">Start Time</label>
                         <input type="time" class="form-control" name="start_time" value="09:00" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Horário de Término</label>
+                        <label class="form-label">End Time</label>
                         <input type="time" class="form-control" name="end_time" value="17:00" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Dias a sugerir</label>
+                        <label class="form-label">Days to Suggest</label>
                         <input type="number" class="form-control" name="days" value="7" min="1" max="30">
                     </div>
                 </div>
-                <button type="submit" name="generate_suggestion" class="btn btn-success">Gerar Sugestões</button>
-                <a href="escala_listar.php" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" name="generate_suggestion" class="btn btn-success">Generate Suggestions</button>
+                <a href="escala_listar.php" class="btn btn-secondary">Cancel</a>
             </form>
         <?php else: ?>
-            <h5>Sugestões Geradas</h5>
-            <p>Foram geradas <?php echo count($suggestions); ?> escalas sugeridas.</p>
+            <h5>Generated Suggestions</h5>
+            <p><?php echo count($suggestions); ?> suggested shifts were created.</p>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Data</th>
-                            <th>Início</th>
-                            <th>Término</th>
-                            <th>Funcionário</th>
+                            <th>Date</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Employee</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -198,8 +198,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_suggestion']
                 </table>
             </div>
             <div class="mt-3">
-                <a href="escala_sugestao.php?apply=1" class="btn btn-primary">Aplicar Sugestões</a>
-                <a href="escala_sugestao.php" class="btn btn-secondary">Refazer</a>
+                <a href="escala_sugestao.php?apply=1" class="btn btn-primary">Apply Suggestions</a>
+                <a href="escala_sugestao.php" class="btn btn-secondary">Regenerate</a>
             </div>
         <?php endif; ?>
     </div>

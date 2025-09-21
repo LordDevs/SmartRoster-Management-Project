@@ -1,20 +1,20 @@
 <?php
-// escala_calendario.php – visualização de escalas em formato de calendário com interatividade
-// Gerentes veem apenas turnos da sua loja; administradores veem todos os turnos.
+// escala_calendario.php – interactive calendar view for shifts
+// Managers see only shifts for their store; administrators see every shift.
 require_once 'config.php';
 
-// Verifica login e função do usuário
+// Validate user login and role
 requireLogin();
 $user = currentUser();
-// Permitido apenas para administradores ou gerentes
+// Allow only administrators or managers
 if (!$user || !in_array($user['role'], ['admin', 'manager'])) {
     header('Location: dashboard.php');
     exit();
 }
 
-// Recupera lista de funcionários conforme o papel do usuário
+// Fetch employee list according to the user role
 $employeesList = [];
-// Store ID para gerentes
+// Store ID for managers
 $storeId = $user['store_id'] ?? null;
 if ($user['role'] === 'manager') {
     $stmtEmp = $pdo->prepare('SELECT id, name FROM employees WHERE store_id = ? ORDER BY name');
@@ -24,7 +24,7 @@ if ($user['role'] === 'manager') {
     $employeesList = $pdo->query('SELECT id, name FROM employees ORDER BY name')->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Carrega turnos como eventos para o calendário
+// Load shifts as calendar events
 $events = [];
 try {
     if ($user['role'] === 'manager') {
@@ -52,11 +52,11 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Calendário de Escalas – Escala Hillbillys</title>
+    <title>Shift Calendar – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css">
@@ -72,34 +72,34 @@ try {
     ?>
 
     <div class="container">
-        <h3 class="mb-4">Calendário de Escalas</h3>
+        <h3 class="mb-4">Shift Calendar</h3>
         <div id="calendar"></div>
-        <!-- Modal para criação de turno -->
+        <!-- Modal for shift creation -->
         <div class="modal fade" id="shiftModal" tabindex="-1" aria-labelledby="shiftModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="shiftModalLabel">Criar Turno</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        <h5 class="modal-title" id="shiftModalLabel">Create Shift</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form id="shiftForm">
                             <div class="mb-3">
-                                <label class="form-label">Data</label>
+                                <label class="form-label">Date</label>
                                 <input type="date" class="form-control" id="modal-date" name="date" required readonly>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Horário de Início</label>
+                                <label class="form-label">Start Time</label>
                                 <input type="time" class="form-control" id="modal-start" name="start_time" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Horário de Término</label>
+                                <label class="form-label">End Time</label>
                                 <input type="time" class="form-control" id="modal-end" name="end_time" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Funcionário</label>
+                                <label class="form-label">Employee</label>
                                 <select class="form-select" id="modal-employee" name="employee_id" required>
-                                    <option value="">Selecione…</option>
+                                    <option value="">Select…</option>
                                     <?php foreach ($employeesList as $emp): ?>
                                     <option value="<?php echo $emp['id']; ?>"><?php echo htmlspecialchars($emp['name']); ?></option>
                                     <?php endforeach; ?>
@@ -108,27 +108,27 @@ try {
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" id="saveShiftBtn">Salvar Turno</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveShiftBtn">Save Shift</button>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Modal de exclusão -->
+        <!-- Deletion modal -->
         <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="deleteModalLabel">Excluir Turno</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        <h5 class="modal-title" id="deleteModalLabel">Delete Shift</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Tem certeza de que deseja excluir este turno?</p>
+                        <p>Are you sure you want to delete this shift?</p>
                         <p id="delete-info" class="fw-bold"></p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
                     </div>
                 </div>
             </div>
@@ -137,7 +137,7 @@ try {
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
-    <!-- FullCalendar e plug-in de interação -->
+    <!-- FullCalendar and interaction plugin -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.9/index.global.min.js"></script>
     <script>
@@ -150,12 +150,12 @@ try {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            locale: 'pt-br',
+            locale: 'en-gb',
             selectable: <?php echo ($user['role'] === 'admin' || $user['role'] === 'manager') ? 'true' : 'false'; ?>,
             editable: false,
             events: <?php echo json_encode($events, JSON_UNESCAPED_UNICODE); ?>,
             eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
-            // Seleção de intervalo
+            // Range selection
             select: function(info) {
                 document.getElementById('modal-date').value = info.startStr.substring(0, 10);
                 var startTime = info.startStr.substring(11, 16);
@@ -168,7 +168,7 @@ try {
                 var modal = new bootstrap.Modal(document.getElementById('shiftModal'));
                 modal.show();
             },
-            // Clique em data
+            // Date click
             dateClick: function(info) {
                 document.getElementById('modal-date').value = info.dateStr;
                 document.getElementById('modal-start').value = '09:00';
@@ -177,7 +177,7 @@ try {
                 var modal = new bootstrap.Modal(document.getElementById('shiftModal'));
                 modal.show();
             },
-            // Clique em evento para excluir
+            // Event click to delete
             eventClick: function(info) {
                 <?php if ($user['role'] === 'admin' || $user['role'] === 'manager'): ?>
                 document.getElementById('delete-info').textContent = info.event.title + ' - ' + info.event.start.toLocaleString();
@@ -188,7 +188,7 @@ try {
             }
         });
         calendar.render();
-        // Salvar turno
+        // Save shift
         document.getElementById('saveShiftBtn').addEventListener('click', function() {
             var form = document.getElementById('shiftForm');
             var formData = new FormData(form);
@@ -208,12 +208,12 @@ try {
                     var mod = bootstrap.Modal.getInstance(document.getElementById('shiftModal'));
                     mod.hide();
                 } else {
-                    alert(data.message || 'Erro ao salvar turno.');
+                    alert(data.message || 'Error saving shift.');
                 }
             })
-            .catch(err => { console.error(err); alert('Falha na comunicação.'); });
+            .catch(err => { console.error(err); alert('Communication failed.'); });
         });
-        // Excluir turno
+        // Delete shift
         document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
             var shiftId = this.dataset.shiftId;
             var fd = new FormData();
@@ -230,10 +230,10 @@ try {
                     var dm = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
                     dm.hide();
                 } else {
-                    alert(data.message || 'Erro ao excluir turno.');
+                    alert(data.message || 'Error deleting shift.');
                 }
             })
-            .catch(err => { console.error(err); alert('Falha na comunicação.'); });
+            .catch(err => { console.error(err); alert('Communication failed.'); });
         });
     });
     </script>

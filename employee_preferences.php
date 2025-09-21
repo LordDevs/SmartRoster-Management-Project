@@ -3,14 +3,14 @@ require_once 'config.php';
 requireEmployee();
 require_once 'helpers.php';
 
-// Garante que apenas funcionários logados possam acessar
+// Ensure only logged-in employees can access
 $funcionario_id = $_SESSION['user_id'] ?? null;
 if (!$funcionario_id) {
     header('Location: index.php');
     exit;
 }
 
-// Recupera preferências existentes
+// Retrieve existing preferences
 $stmt = $conn->prepare('SELECT day_of_week, available_start, available_end, max_hours_per_day, min_rest_hours FROM employee_preferences WHERE funcionario_id = ?');
 $stmt->bind_param('i', $funcionario_id);
 $stmt->execute();
@@ -21,7 +21,7 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Funções auxiliares para valores padrão
+// Helper for default values
 function get_pref_field($prefs, $day, $field) {
     return isset($prefs[$day][$field]) ? $prefs[$day][$field] : '';
 }
@@ -31,29 +31,29 @@ function get_pref_field($prefs, $day, $field) {
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Preferências de Funcionário</title>
+    <title>Employee Preferences</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" integrity="sha384-9ndCyUa4y3Yz2+1Jqv1MDwse4bCMZJ6uaOYJ6xZgTwHUnYlXyt1e1NEMqH9cO2+" crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <?php include 'navbar.php'; ?>
 <div class="container mt-4">
-    <h1>Minhas Preferências de Turno</h1>
+    <h1>My Shift Preferences</h1>
     <form action="employee_preferences_save.php" method="post">
         <input type="hidden" name="funcionario_id" value="<?php echo htmlspecialchars($funcionario_id); ?>">
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Dia da Semana</th>
-                    <th>Início Disponível</th>
-                    <th>Fim Disponível</th>
-                    <th>Máx Horas/Dia</th>
-                    <th>Descanso Mín. (h)</th>
+                    <th>Day of Week</th>
+                    <th>Available Start</th>
+                    <th>Available End</th>
+                    <th>Max Hours/Day</th>
+                    <th>Minimum Rest (h)</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                $dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+                $dias = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                 for ($d = 0; $d < 7; $d++):
                     $pref = $preferences[$d] ?? [];
                 ?>
@@ -68,14 +68,14 @@ function get_pref_field($prefs, $day, $field) {
             </tbody>
         </table>
         <div class="mb-3">
-            <label for="weekly_max_hours" class="form-label">Horas Máximas por Semana:</label>
+            <label for="weekly_max_hours" class="form-label">Maximum Hours per Week:</label>
             <input type="number" step="0.5" name="weekly_max_hours" id="weekly_max_hours" value="<?php echo htmlspecialchars(getWeeklyMaxHours($funcionario_id, $conn)); ?>" class="form-control" required>
         </div>
         <div class="mb-3">
-            <label for="hourly_rate" class="form-label">Salário por Hora (€):</label>
+            <label for="hourly_rate" class="form-label">Hourly Rate (€):</label>
             <input type="number" step="0.01" name="hourly_rate" id="hourly_rate" value="<?php echo htmlspecialchars(getHourlyRate($funcionario_id, $conn)); ?>" class="form-control" required>
         </div>
-        <button type="submit" class="btn btn-primary">Salvar Preferências</button>
+        <button type="submit" class="btn btn-primary">Save Preferences</button>
     </form>
 </div>
 </body>

@@ -1,5 +1,5 @@
 <?php
-// funcionario_vincular.php – associar funcionário a uma escala existente
+// funcionario_vincular.php – associate an employee with an existing shift
 require_once 'config.php';
 requireLogin();
 
@@ -13,17 +13,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $employee_id = (int)$_POST['employee_id'];
     $stmt = $pdo->prepare('UPDATE shifts SET employee_id = ? WHERE id = ?');
     $stmt->execute([$employee_id, $shift_id]);
-    $message = 'Funcionário vinculado com sucesso à escala.';
+    $message = 'Employee successfully assigned to the shift.';
     // Refresh shift list after update
     $shifts = $pdo->query('SELECT * FROM shifts ORDER BY date, start_time')->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vincular Funcionário – Escala Hillbillys</title>
+    <title>Assign Employee – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -33,15 +33,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Vincular Funcionário a Escala</h3>
+        <h3>Assign Employee to Shift</h3>
         <?php if ($message): ?>
             <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
         <form method="post">
             <div class="mb-3">
-                <label class="form-label">Escala</label>
+                <label class="form-label">Shift</label>
                 <select class="form-select" name="shift_id" required>
-                    <option value="">Selecione uma escala</option>
+                    <option value="">Select a shift</option>
                     <?php foreach ($shifts as $shift): ?>
                         <?php $label = $shift['date'] . ' ' . $shift['start_time'] . '–' . $shift['end_time']; ?>
                         <option value="<?php echo $shift['id']; ?>" <?php if (isset($_POST['shift_id']) && $_POST['shift_id'] == $shift['id']) echo 'selected'; ?>>
@@ -51,9 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
             <div class="mb-3">
-                <label class="form-label">Funcionário</label>
+                <label class="form-label">Employee</label>
                 <select class="form-select" name="employee_id" required>
-                    <option value="">Selecione um funcionário</option>
+                    <option value="">Select an employee</option>
                     <?php foreach ($employees as $emp): ?>
                         <option value="<?php echo $emp['id']; ?>" <?php if (isset($_POST['employee_id']) && $_POST['employee_id'] == $emp['id']) echo 'selected'; ?>>
                             <?php echo htmlspecialchars($emp['name']); ?>
@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Vincular</button>
-            <a href="escala_listar.php" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Assign</button>
+            <a href="escala_listar.php" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

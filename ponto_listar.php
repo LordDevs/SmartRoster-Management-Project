@@ -24,11 +24,11 @@ if ($role === 'manager') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registros de Ponto – Escala Hillbillys</title>
+    <title>Time Entries – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <!-- DataTables CSS for enhanced tables -->
@@ -41,22 +41,22 @@ if ($role === 'manager') {
     ?>
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>Registros de Ponto</h3>
-            <div class="btn-group" role="group" aria-label="Ações">
-                <a href="export_time_entries.php" class="btn btn-secondary">Exportar CSV</a>
-                <a href="ponto_registrar.php" class="btn btn-success">Registrar Ponto</a>
+            <h3>Time Entries</h3>
+            <div class="btn-group" role="group" aria-label="Actions">
+                <a href="export_time_entries.php" class="btn btn-secondary">Export CSV</a>
+                <a href="ponto_registrar.php" class="btn btn-success">Record Time Entry</a>
             </div>
         </div>
         <table id="timeEntriesTable" class="table table-striped">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Funcionário</th>
-                    <th>Entrada</th>
-                    <th>Saída</th>
-                    <th>Justificativa</th>
-                    <th>Duração (h)</th>
-                    <th>Ações</th>
+                    <th>Employee</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Justification</th>
+                    <th>Duration (h)</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,7 +78,7 @@ if ($role === 'manager') {
                         <td><?php echo $duration; ?></td>
                         <td>
                             <?php if ($_SESSION['user_role'] !== 'employee'): ?>
-                                <a href="ponto_corrigir.php?id=<?php echo $entry['id']; ?>" class="btn btn-sm btn-warning">Corrigir</a>
+                                <a href="ponto_corrigir.php?id=<?php echo $entry['id']; ?>" class="btn btn-sm btn-warning">Adjust</a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -94,7 +94,7 @@ if ($role === 'manager') {
     document.addEventListener('DOMContentLoaded', function() {
         $('#timeEntriesTable').DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/en-GB.json'
             },
             order: [[2, 'desc']]
         });

@@ -1,7 +1,7 @@
 <?php
-// Script simples para criar/alterar tabelas necessárias para a Meta 3.
-// Execute este script manualmente (por linha de comando) uma vez para
-// inicializar as colunas e tabelas adicionais.
+// Simple script to create/update tables required for Meta 3.
+// Run this script manually (via command line) once to
+// initialize the additional columns and tables.
 
 require_once 'config.php';
 
@@ -25,9 +25,9 @@ foreach ($sqls as $sql) {
     try {
         $conn->query($sql);
     } catch (Exception $e) {
-        // Ignora erros caso as colunas/tabela já existam
+        // Ignore errors if the columns/table already exist
         // echo $e->getMessage();
     }
 }
 
-echo "Meta 3: colunas e tabela configuradas.";
+echo "Meta 3: columns and table configured.";

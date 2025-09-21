@@ -1,5 +1,5 @@
 <?php
-// swap_request.php – solicitar troca de turno
+// swap_request.php – request a shift swap
 require_once 'config.php';
 requireLogin();
 // Only employees should be able to request swaps
@@ -40,15 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Insert swap request
     $stmt = $pdo->prepare('INSERT INTO swap_requests (shift_id, requested_by, requested_to, status) VALUES (?, ?, ?, "pending")');
     $stmt->execute([$shift_id, $requested_by, $requested_to]);
-    $message = 'Solicitação de troca registrada com sucesso.';
+    $message = 'Swap request recorded successfully.';
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Solicitar Troca – Escala Hillbillys</title>
+    <title>Request Swap – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -58,16 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Solicitar Troca de Turno</h3>
+        <h3>Request Shift Swap</h3>
         <?php if ($message): ?>
             <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
-        <p>Turno atual: <?php echo htmlspecialchars($shift['date'] . ' ' . $shift['start_time'] . '–' . $shift['end_time']); ?></p>
+        <p>Current shift: <?php echo htmlspecialchars($shift['date'] . ' ' . $shift['start_time'] . '–' . $shift['end_time']); ?></p>
         <form method="post">
             <div class="mb-3">
-                <label class="form-label">Selecionar funcionário para troca</label>
+                <label class="form-label">Select employee to swap with</label>
                 <select class="form-select" name="requested_to" required>
-                    <option value="">Selecione...</option>
+                    <option value="">Select...</option>
                     <?php foreach ($employees as $emp): ?>
                         <?php if ($emp['id'] != $shift['employee_id']): ?>
                             <option value="<?php echo $emp['id']; ?>">
@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Solicitar Troca</button>
-            <a href="escala_listar.php" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Request Swap</button>
+            <a href="escala_listar.php" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

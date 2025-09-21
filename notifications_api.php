@@ -17,11 +17,11 @@ try{
     }
   } elseif($method==='POST'){
     if($action==='mark_read'){
-      $id=isset($_POST['id'])?(int)$_POST['id']:0; if($id<=0){ echo json_encode(['success'=>false,'message'=>'ID inválido.']); exit(); }
+      $id=isset($_POST['id'])?(int)$_POST['id']:0; if($id<=0){ echo json_encode(['success'=>false,'message'=>'Invalid ID.']); exit(); }
       $st=$pdo->prepare('UPDATE notifications SET status="read" WHERE id=? AND user_id=?'); $st->execute([$id,$userId]); echo json_encode(['success'=>true]); exit();
     } elseif($action==='mark_all_read'){
       $st=$pdo->prepare('UPDATE notifications SET status="read" WHERE user_id=? AND status="unread"'); $st->execute([$userId]); echo json_encode(['success'=>true]); exit();
     }
   }
-  echo json_encode(['success'=>false,'message'=>'Ação não suportada.']);
-}catch(Exception $e){ echo json_encode(['success'=>false,'message'=>'Erro: '.$e->getMessage()]); }
+  echo json_encode(['success'=>false,'message'=>'Unsupported action.']);
+}catch(Exception $e){ echo json_encode(['success'=>false,'message'=>'Error: '.$e->getMessage()]); }

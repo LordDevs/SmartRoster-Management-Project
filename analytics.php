@@ -1,5 +1,5 @@
 <?php
-// analytics.php – Painel de métricas avançadas para escalas e registros de ponto
+// analytics.php – advanced metrics dashboard for schedules and time entries
 require_once __DIR__ . '/config.php';
 requireLogin();
 $user = currentUser();
@@ -9,21 +9,21 @@ if (!$user || !in_array($user['role'], ['admin','manager'])) {
 }
 $storeId = $user['store_id'] ?? null;
 
-// Função para calcular horas em segundos
+// Helper to calculate hours in seconds
 function hoursBetween($start, $end) {
     $startTs = strtotime($start);
     $endTs   = strtotime($end);
     return max(0, $endTs - $startTs);
 }
 
-// 1. Horas agendadas por dia da semana
-$scheduledHours = array_fill(0, 7, 0); // 0=domingo,6=sabado
-// 2. Horas trabalhadas por dia da semana
+// 1. Scheduled hours per day of the week
+$scheduledHours = array_fill(0, 7, 0); // 0=Sunday, 6=Saturday
+// 2. Hours worked per day of the week
 $workedHours    = array_fill(0, 7, 0);
-// 3. Horas por funcionário (agendadas e trabalhadas)
+// 3. Hours per employee (scheduled and worked)
 $hoursByEmployee = [];
 
-// Obter turnos
+// Fetch shifts
 if ($user['role'] === 'manager') {
     $stmtShifts = $pdo->prepare('SELECT s.employee_id, e.name, s.date, s.start_time, s.end_time FROM shifts s JOIN employees e ON s.employee_id = e.id WHERE e.store_id = ?');
     $stmtShifts->execute([$storeId]);
@@ -40,7 +40,7 @@ foreach ($shiftRows as $row) {
     $hoursByEmployee[$eid]['scheduled'] += $seconds;
 }
 
-// Obter registros de ponto
+// Fetch time entries
 if ($user['role'] === 'manager') {
     $stmtEntries = $pdo->prepare('SELECT te.employee_id, e.name, te.clock_in, te.clock_out FROM time_entries te JOIN employees e ON te.employee_id = e.id WHERE e.store_id = ?');
     $stmtEntries->execute([$storeId]);
@@ -59,12 +59,12 @@ foreach ($entryRows as $row) {
     $hoursByEmployee[$eid]['worked'] += $seconds;
 }
 
-// Converter segundos para horas (com 2 casas decimais)
+// Convert seconds to hours (two decimals)
 for ($i=0; $i<7; $i++) {
     $scheduledHours[$i] = round($scheduledHours[$i] / 3600, 2);
     $workedHours[$i]    = round($workedHours[$i] / 3600, 2);
 }
-// Preparar dados por funcionário
+// Prepare per-employee data
 $labelsEmp = [];
 $scheduledEmp = [];
 $workedEmp = [];
@@ -75,11 +75,11 @@ foreach ($hoursByEmployee as $eid => $data) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Métricas Avançadas – Escala Hillbillys</title>
+    <title>Advanced Metrics – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -91,7 +91,7 @@ foreach ($hoursByEmployee as $eid => $data) {
     require_once __DIR__ . '/navbar.php';
 ?>
 <div class="container mt-4">
-    <h3>Relatório de Horas Trabalhadas vs Agendadas</h3>
+    <h3>Hours Worked vs Scheduled Report</h3>
     <div class="row">
         <div class="col-md-6 mb-4">
             <canvas id="chartWeek"></canvas>
@@ -102,8 +102,8 @@ foreach ($hoursByEmployee as $eid => $data) {
     </div>
 </div>
 <script>
-// Dados da semana
-const labelsWeek = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+// Weekly data
+const labelsWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const scheduledWeek = <?php echo json_encode(array_values($scheduledHours)); ?>;
 const workedWeek    = <?php echo json_encode(array_values($workedHours)); ?>;
 
@@ -113,23 +113,23 @@ new Chart(ctxWeek, {
     data: {
         labels: labelsWeek,
         datasets: [
-            { label: 'Horas Agendadas', data: scheduledWeek, backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor:'rgba(54,162,235,1)', borderWidth:1 },
-            { label: 'Horas Trabalhadas', data: workedWeek, backgroundColor: 'rgba(255, 99, 132, 0.5)', borderColor:'rgba(255,99,132,1)', borderWidth:1 }
+            { label: 'Scheduled Hours', data: scheduledWeek, backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor:'rgba(54,162,235,1)', borderWidth:1 },
+            { label: 'Worked Hours', data: workedWeek, backgroundColor: 'rgba(255, 99, 132, 0.5)', borderColor:'rgba(255,99,132,1)', borderWidth:1 }
         ]
     },
     options: {
         responsive: true,
         plugins: {
-            title: { display: true, text: 'Horas por Dia da Semana' }
+            title: { display: true, text: 'Hours by Day of Week' }
         },
         scales: {
-            y: { beginAtZero: true, title: { display: true, text: 'Horas' } },
-            x: { title: { display: true, text: 'Dia da Semana' } }
+            y: { beginAtZero: true, title: { display: true, text: 'Hours' } },
+            x: { title: { display: true, text: 'Day of Week' } }
         }
     }
 });
 
-// Dados por funcionário
+// Per-employee data
 const labelsEmp = <?php echo json_encode($labelsEmp); ?>;
 const scheduledEmp = <?php echo json_encode($scheduledEmp); ?>;
 const workedEmp    = <?php echo json_encode($workedEmp); ?>;
@@ -140,16 +140,16 @@ new Chart(ctxEmp, {
     data: {
         labels: labelsEmp,
         datasets: [
-            { label:'Horas Agendadas', data: scheduledEmp, backgroundColor:'rgba(54,162,235,0.5)', borderColor:'rgba(54,162,235,1)', borderWidth:1 },
-            { label:'Horas Trabalhadas', data: workedEmp, backgroundColor:'rgba(255,99,132,0.5)', borderColor:'rgba(255,99,132,1)', borderWidth:1 }
+            { label:'Scheduled Hours', data: scheduledEmp, backgroundColor:'rgba(54,162,235,0.5)', borderColor:'rgba(54,162,235,1)', borderWidth:1 },
+            { label:'Worked Hours', data: workedEmp, backgroundColor:'rgba(255,99,132,0.5)', borderColor:'rgba(255,99,132,1)', borderWidth:1 }
         ]
     },
     options: {
         responsive: true,
-        plugins: { title: { display: true, text: 'Horas por Funcionário' } },
+        plugins: { title: { display: true, text: 'Hours by Employee' } },
         scales: {
-            y: { beginAtZero:true, title: { display:true, text:'Horas' } },
-            x: { title: { display:true, text:'Funcionário' } }
+            y: { beginAtZero:true, title: { display:true, text:'Hours' } },
+            x: { title: { display:true, text:'Employee' } }
         }
     }
 });

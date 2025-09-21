@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start();
 }
-// Notificações (opcionais)
+// Notifications (optional)
 $MAIL_FROM       = getenv('MAIL_FROM') ?: 'no-reply@localhost';
 $MAIL_FROM_NAME  = getenv('MAIL_FROM_NAME') ?: 'Escala Hillbillys';
 $SLACK_WEBHOOK   = getenv('SLACK_WEBHOOK_URL') ?: '';
@@ -71,10 +71,10 @@ function requireRole(array $roles): void {
     $role = $u['role'] ?? null;
     if (!$role || !in_array($role, $roles, true)) {
         http_response_code(403);
-        die('Acesso negado.');
+        die('Access denied.');
     }
 }
-// --- Compat Shims (código legado) ---
+// --- Compat Shims (legacy code) ---
 function requireAdmin(): void {
     // Ensure user is logged in and has admin role
     requireLogin();
@@ -91,8 +91,8 @@ function requireEmployee(): void {
     requireRole(['employee']);
 }
 /**
- * Em versões antigas, "privileged" normalmente significava "admin ou manager".
- * Ajuste se o seu conceito for diferente.
+ * In older versions, "privileged" usually meant "admin or manager".
+ * Adjust if your definition differs.
  */
 function requirePrivileged(): void {
     // Ensure user is logged in and has admin or manager role
@@ -100,7 +100,7 @@ function requirePrivileged(): void {
     requireRole(['admin','manager']);
 }
 
-/** Helpers legados comuns */
+/** Common legacy helpers */
 function isAdmin(): bool {
     $u = currentUser();
     return ($u['role'] ?? null) === 'admin';

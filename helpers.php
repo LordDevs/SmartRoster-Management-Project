@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Recupera o limite máximo de horas semanais para um funcionário.
+ * Retrieve the maximum weekly hours for an employee.
  *
  * @param int     $funcionario_id
  * @param mysqli  $conn
@@ -18,7 +18,7 @@ function getWeeklyMaxHours($funcionario_id, $conn) {
 }
 
 /**
- * Recupera a taxa horária (salário por hora) de um funcionário.
+ * Retrieve the hourly rate for an employee.
  *
  * @param int     $funcionario_id
  * @param mysqli  $conn
@@ -35,17 +35,16 @@ function getHourlyRate($funcionario_id, $conn) {
 }
 
 /**
- * Calcula quantas horas um funcionário trabalhou em um intervalo de datas.
+ * Calculate how many hours an employee worked within a date range.
  *
- * Assume que existe uma tabela `escalas` (ou `turnos`) contendo colunas `data`,
- * `hora_inicio`, `hora_fim` e `funcionario_id`. Ajuste os nomes de campos
- * conforme o seu banco.
+ * Assumes a table `escalas` (shifts) containing columns `data`,
+ * `hora_inicio`, `hora_fim`, and `funcionario_id`.
  *
  * @param int        $funcionario_id
  * @param DateTime   $weekStart
  * @param DateTime   $weekEnd
  * @param mysqli     $conn
- * @return float     Número de horas trabalhadas
+ * @return float     Total hours worked
  */
 function getEmployeeHoursWorked($funcionario_id, $weekStart, $weekEnd, $conn) {
     $start = $weekStart->format('Y-m-d H:i:s');
@@ -69,20 +68,19 @@ function getEmployeeHoursWorked($funcionario_id, $weekStart, $weekEnd, $conn) {
 }
 
 /**
- * Valida um turno proposto em relação às preferências e restrições do funcionário.
+ * Validate a proposed shift against employee preferences and constraints.
  *
- * Retorna uma string com mensagem de erro caso o turno seja inválido ou null
- * se estiver tudo ok. Esta função deve ser chamada antes de inserir ou atualizar
- * turnos no banco.
+ * Returns an error message when invalid or null when valid.
+ * Should be invoked before inserting or updating shifts in the database.
  *
  * @param int       $funcionario_id
- * @param DateTime  $start  Data/hora de início do turno
- * @param DateTime  $end    Data/hora de término do turno
+ * @param DateTime  $start
+ * @param DateTime  $end
  * @param mysqli    $conn
  * @return string|null
  */
 function validate_shift($funcionario_id, $start, $end, $conn) {
-    // Impede sobreposição com turnos existentes
+    // Prevent overlap with existing shifts
     $s = $start->format('Y-m-d H:i:s');
     $e = $end->format('Y-m-d H:i:s');
     $query = 'SELECT data, hora_inicio, hora_fim FROM escalas WHERE funcionario_id = ? AND ((CONCAT(data, " ", hora_inicio) < ? AND CONCAT(data, " ", hora_fim) > ?) OR (CONCAT(data, " ", hora_inicio) >= ? AND CONCAT(data, " ", hora_inicio) < ?))';
@@ -92,25 +90,25 @@ function validate_shift($funcionario_id, $start, $end, $conn) {
     $stmt->store_result();
     if ($stmt->num_rows > 0) {
         $stmt->close();
-        return 'O turno se sobrepõe a outro turno existente.';
+        return 'The shift overlaps an existing shift.';
     }
     $stmt->close();
 
-    // Preferências para o dia da semana
-    $dayOfWeek = (int)$start->format('w'); // 0=domingo
+    // Preferences for the weekday
+    $dayOfWeek = (int)$start->format('w'); // 0=Sunday
     $stmt = $conn->prepare('SELECT available_start, available_end, max_hours_per_day, min_rest_hours FROM employee_preferences WHERE funcionario_id = ? AND day_of_week = ?');
     $stmt->bind_param('ii', $funcionario_id, $dayOfWeek);
     $stmt->execute();
     $stmt->bind_result($avail_start, $avail_end, $max_hours_day, $min_rest);
     if ($stmt->fetch()) {
-        // Verifica janelas de disponibilidade
+        // Check availability windows
         if ($avail_start && $start->format('H:i:s') < $avail_start) {
-            return 'Início do turno antes do horário disponível.';
+            return 'Shift start before available time.';
         }
         if ($avail_end && $end->format('H:i:s') > $avail_end) {
-            return 'Fim do turno após o horário disponível.';
+            return 'Shift end after available time.';
         }
-        // Máximo de horas por dia
+        // Maximum hours per day
         $stmt2 = $conn->prepare('SELECT data, hora_inicio, hora_fim FROM escalas WHERE funcionario_id = ? AND data = ?');
         $date = $start->format('Y-m-d');
         $stmt2->bind_param('is', $funcionario_id, $date);
@@ -125,9 +123,9 @@ function validate_shift($funcionario_id, $start, $end, $conn) {
         $stmt2->close();
         $newHours = ($end->getTimestamp() - $start->getTimestamp()) / 3600;
         if ($max_hours_day && ($workedToday + $newHours) > $max_hours_day) {
-            return 'Excederia o máximo de horas permitidas por dia.';
+            return 'Would exceed the allowed daily hours.';
         }
-        // Intervalo mínimo entre turnos
+        // Minimum rest between shifts
         if ($min_rest) {
             $stmt3 = $conn->prepare('SELECT data, hora_inicio, hora_fim FROM escalas WHERE funcionario_id = ? AND CONCAT(data, " ", hora_fim) <= ? ORDER BY data DESC, hora_fim DESC LIMIT 1');
             $stmt3->bind_param('is', $funcionario_id, $s);
@@ -137,7 +135,7 @@ function validate_shift($funcionario_id, $start, $end, $conn) {
                 $lastEnd = new DateTime($row3['data'].' '.$row3['hora_fim'], new DateTimeZone('Europe/Dublin'));
                 $hoursSinceLast = ($start->getTimestamp() - $lastEnd->getTimestamp()) / 3600;
                 if ($hoursSinceLast < $min_rest) {
-                    return 'Intervalo insuficiente desde o último turno.';
+                    return 'Insufficient rest since the last shift.';
                 }
             }
             $stmt3->close();
@@ -145,7 +143,7 @@ function validate_shift($funcionario_id, $start, $end, $conn) {
     }
     $stmt->close();
 
-    // Máximo de horas por semana
+    // Weekly maximum hours
     $weekStart = clone $start;
     $weekStart->modify('monday this week');
     $weekStart->setTime(0, 0, 0);
@@ -155,7 +153,7 @@ function validate_shift($funcionario_id, $start, $end, $conn) {
     $weeklyMax      = getWeeklyMaxHours($funcionario_id, $conn);
     $newShiftHours  = ($end->getTimestamp() - $start->getTimestamp()) / 3600;
     if ($hoursWorked + $newShiftHours > $weeklyMax) {
-        return 'Excederia o total de horas permitidas na semana.';
+        return 'Would exceed the weekly hour limit.';
     }
     return null;
 }

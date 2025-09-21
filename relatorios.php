@@ -1,5 +1,5 @@
 <?php
-// relatorios.php – relatórios e dashboards avançados
+// relatorios.php – advanced reports and dashboards
 require_once 'config.php';
 // Only allow managers and admins to view reports. Employees should not access this page.
 requirePrivileged();
@@ -45,11 +45,11 @@ foreach ($hoursPerEmployee as $row) {
 
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Relatórios – Escala Hillbillys</title>
+    <title>Reports – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -60,11 +60,11 @@ foreach ($hoursPerEmployee as $row) {
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
-        <h3>Relatórios e Dashboards</h3>
+        <h3>Reports and Dashboards</h3>
         <div class="row">
             <div class="col-lg-6">
                 <div class="card mb-4">
-                    <div class="card-header">Horas Trabalhadas por Funcionário (Mês Atual)</div>
+                    <div class="card-header">Hours Worked per Employee (Current Month)</div>
                     <div class="card-body">
                         <canvas id="employeeHoursChart"></canvas>
                     </div>
@@ -72,7 +72,7 @@ foreach ($hoursPerEmployee as $row) {
             </div>
             <div class="col-lg-6">
                 <div class="card mb-4">
-                    <div class="card-header">Horas Extras por Funcionário (Mês Atual)</div>
+                    <div class="card-header">Overtime per Employee (Current Month)</div>
                     <div class="card-body">
                         <canvas id="employeeOvertimeChart"></canvas>
                     </div>
@@ -91,7 +91,7 @@ foreach ($hoursPerEmployee as $row) {
         data: {
             labels: employeeLabels,
             datasets: [{
-                label: 'Horas Trabalhadas',
+                label: 'Hours Worked',
                 data: hoursData,
                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                 borderColor: 'rgba(75, 192, 192, 1)',
@@ -100,8 +100,8 @@ foreach ($hoursPerEmployee as $row) {
         },
         options: {
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Horas' } },
-                x: { title: { display: true, text: 'Funcionários' } }
+                y: { beginAtZero: true, title: { display: true, text: 'Hours' } },
+                x: { title: { display: true, text: 'Employees' } }
             },
             plugins: { legend: { display: false } }
         }
@@ -113,7 +113,7 @@ foreach ($hoursPerEmployee as $row) {
         data: {
             labels: employeeLabels,
             datasets: [{
-                label: 'Horas Extras',
+                label: 'Overtime Hours',
                 data: overtimeData,
                 backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 borderColor: 'rgba(255, 99, 132, 1)',
@@ -122,8 +122,8 @@ foreach ($hoursPerEmployee as $row) {
         },
         options: {
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Horas' } },
-                x: { title: { display: true, text: 'Funcionários' } }
+                y: { beginAtZero: true, title: { display: true, text: 'Hours' } },
+                x: { title: { display: true, text: 'Employees' } }
             },
             plugins: { legend: { display: false } }
         }

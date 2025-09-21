@@ -1,5 +1,5 @@
 <?php
-// usuarios_listar.php – listagem de funcionários
+// usuarios_listar.php – employee listing
 require_once __DIR__ . '/config.php';
 requirePrivileged();
 
@@ -22,11 +22,11 @@ if ($_SESSION['user_role'] === 'manager') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Funcionários – Escala Hillbillys</title>
+    <title>Employees – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <!-- DataTables CSS for enhanced tables -->
@@ -40,25 +40,25 @@ if ($_SESSION['user_role'] === 'manager') {
 
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>Funcionários</h3>
+            <h3>Employees</h3>
             <div>
-                <a href="export_employees.php" class="btn btn-secondary me-2">Exportar CSV</a>
-                <a href="usuario_criar.php" class="btn btn-success">Adicionar Funcionário</a>
+                <a href="export_employees.php" class="btn btn-secondary me-2">Export CSV</a>
+                <a href="usuario_criar.php" class="btn btn-success">Add Employee</a>
             </div>
         </div>
         <table id="employeesTable" class="table table-striped">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Nome</th>
-                    <th>E-mail</th>
-                    <th>Telefone</th>
-                    <th>Loja</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Store</th>
                     <th>PPSN</th>
                     <th>IRP</th>
-                    <th>Salário/h (€)</th>
-                    <th>Perfil</th>
-                    <th>Ações</th>
+                    <th>Pay/h (€)</th>
+                    <th>Role</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,15 +75,15 @@ if ($_SESSION['user_role'] === 'manager') {
                         <td>
                             <?php
                                 if (isset($emp['user_role'])) {
-                                    echo htmlspecialchars($emp['user_role'] === 'manager' ? 'Gerente' : 'Funcionário');
+                                    echo htmlspecialchars($emp['user_role'] === 'manager' ? 'Manager' : 'Employee');
                                 } else {
                                     echo '';
                                 }
                             ?>
                         </td>
                         <td>
-                            <a href="usuario_editar.php?id=<?php echo $emp['id']; ?>" class="btn btn-sm btn-primary">Editar</a>
-                            <a href="usuario_excluir.php?id=<?php echo $emp['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');">Excluir</a>
+                            <a href="usuario_editar.php?id=<?php echo $emp['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="usuario_excluir.php?id=<?php echo $emp['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -99,7 +99,7 @@ if ($_SESSION['user_role'] === 'manager') {
     document.addEventListener('DOMContentLoaded', function() {
         $('#employeesTable').DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/en-GB.json'
             },
             order: [[1, 'asc']]
         });

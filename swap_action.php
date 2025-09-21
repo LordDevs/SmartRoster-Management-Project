@@ -1,5 +1,5 @@
 <?php
-// swap_action.php – aprovar ou rejeitar solicitações de troca de turno
+// swap_action.php – approve or reject shift swap requests
 require_once 'config.php';
 // Only allow managers and admins to approve/reject swap requests
 requirePrivileged();

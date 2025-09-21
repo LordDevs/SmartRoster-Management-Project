@@ -32,6 +32,6 @@ if ($user && password_verify($password, $user['password'])) {
 }
 
 // If we reach here, login failed
-$_SESSION['login_error'] = 'Usuário ou senha inválidos.';
+$_SESSION['login_error'] = 'Invalid username or password.';
 header('Location: index.php');
 exit();

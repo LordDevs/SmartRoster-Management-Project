@@ -1,10 +1,10 @@
 <?php
-// desempenho.php – relatório de desempenho de funcionários
+// desempenho.php – employee performance report
 require_once 'config.php';
 // Only allow managers and admins to view performance reports
 requirePrivileged();
 
-// Determine metrics: total hours, number of entries, number of completed entries, number of late entries (with justification), average duration
+// Determine metrics: total hours, number of entries, completed entries, late entries (with justification), and average duration
 $role = $_SESSION['user_role'];
 if ($role === 'manager') {
     $user = currentUser();
@@ -45,33 +45,33 @@ foreach ($metrics as &$row) {
 unset($row);
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Desempenho – Escala Hillbillys</title>
+    <title>Performance – Escala Hillbillys</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <?php
-        // Definir página ativa para desempenho
+        // Set the active navbar page for performance
         $activePage = 'desempenho';
         require_once __DIR__ . '/navbar.php';
     ?>
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>Desempenho de Funcionários</h3>
-            <a href="export_performance.php" class="btn btn-secondary">Exportar CSV</a>
+            <h3>Employee Performance</h3>
+            <a href="export_performance.php" class="btn btn-secondary">Export CSV</a>
         </div>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Funcionário</th>
-                    <th>Horas Totais</th>
-                    <th>Total de Registros</th>
-                    <th>Entradas Completadas</th>
-                    <th>Registros com Justificativa</th>
+                    <th>Employee</th>
+                    <th>Total Hours</th>
+                    <th>Total Entries</th>
+                    <th>Completed Entries</th>
+                    <th>Entries with Justification</th>
                 </tr>
             </thead>
             <tbody>
@@ -85,7 +85,7 @@ unset($row);
                     </tr>
                 <?php endforeach; ?>
                 <?php if (empty($metrics)): ?>
-                    <tr><td colspan="5">Nenhum dado disponível.</td></tr>
+                    <tr><td colspan="5">No data available.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
