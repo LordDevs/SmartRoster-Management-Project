@@ -1,136 +1,173 @@
 <?php
-// escala_listar_future.php
-// List upcoming shifts. Shows only shifts dated today or later.
-// Administrators see every store; managers are limited to their store.
+declare(strict_types=1);
+require_once __DIR__ . '/config.php';
 
-require_once 'config.php';
-requirePrivileged();
-$currentUser = currentUser();
-$role = $currentUser['role'];
-$storeId = $currentUser['store_id'] ?? null;
-
-// Fetch upcoming shifts
-if ($role === 'manager' && $storeId) {
-    $stmt = $pdo->prepare('SELECT s.id, s.date, s.start_time, s.end_time, e.name AS employee_name
-                           FROM shifts s
-                           JOIN employees e ON s.employee_id = e.id
-                           WHERE e.store_id = ? AND s.date >= DATE("now")
-                           ORDER BY s.date, s.start_time');
-    $stmt->execute([$storeId]);
-    $shifts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $stmt = $pdo->query('SELECT s.id, s.date, s.start_time, s.end_time, e.name AS employee_name
-                         FROM shifts s
-                         LEFT JOIN employees e ON s.employee_id = e.id
-                         WHERE s.date >= DATE("now")
-                         ORDER BY s.date, s.start_time');
-    $shifts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Troque por requireLogin() se quiser permitir employees verem a lista (só leitura)
+if (!isset($_SESSION['user'])) {
+  http_response_code(403);
+  die('Access denied.');
 }
 
-// Fetch pending swap requests (upcoming only)
-if ($role === 'manager' && $storeId) {
-    $swapStmt = $pdo->prepare('SELECT sr.id, sr.shift_id, sr.status, e1.name AS requester, e2.name AS requested_to
-                               FROM swap_requests sr
-                               JOIN shifts s ON sr.shift_id = s.id
-                               JOIN employees se ON s.employee_id = se.id
-                               JOIN employees e1 ON sr.requested_by = e1.id
-                               JOIN employees e2 ON sr.requested_to = e2.id
-                               WHERE sr.status = "pending" AND se.store_id = ? AND s.date >= DATE("now")');
-    $swapStmt->execute([$storeId]);
-    $swapRequests = $swapStmt->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $swapStmt = $pdo->query('SELECT sr.id, sr.shift_id, sr.status, e1.name AS requester, e2.name AS requested_to
-                             FROM swap_requests sr
-                             JOIN shifts s ON sr.shift_id = s.id
-                             JOIN employees e1 ON sr.requested_by = e1.id
-                             JOIN employees e2 ON sr.requested_to = e2.id
-                             WHERE sr.status = "pending" AND s.date >= DATE("now")');
-    $swapRequests = $swapStmt->fetchAll(PDO::FETCH_ASSOC);
+$role = $_SESSION['user']['role'] ?? '';
+$storeId = (int)($_SESSION['user']['store_id'] ?? 0);
+
+$errors = [];
+
+// Lista de turnos futuros
+try {
+  if ($role === 'manager' && $storeId > 0) {
+    $sql = "
+      SELECT s.id, s.date, s.start_time, s.end_time, e.name AS employee
+      FROM shifts s
+      JOIN employees e ON e.id = s.employee_id
+      WHERE s.date >= CURDATE() AND e.store_id = :sid
+      ORDER BY s.date, s.start_time
+    ";
+    $st = $pdo->prepare($sql);
+    $st->execute([':sid'=>$storeId]);
+  } else {
+    $sql = "
+      SELECT s.id, s.date, s.start_time, s.end_time, e.name AS employee, st.name AS store_name
+      FROM shifts s
+      JOIN employees e ON e.id = s.employee_id
+      LEFT JOIN stores st ON st.id = e.store_id
+      WHERE s.date >= CURDATE()
+      ORDER BY s.date, s.start_time
+    ";
+    $st = $pdo->query($sql);
+  }
+  $shifts = $st->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+  $errors[] = "Erro ao carregar escalas: " . $e->getMessage();
+  $shifts = [];
 }
 
+// Solicitações pendentes (somente admin/manager)
+$pending = [];
+if (in_array($role, ['admin','manager'], true)) {
+  try {
+    if ($role === 'manager' && $storeId > 0) {
+      $q = $pdo->prepare("
+        SELECT sr.id, s.date, s.start_time, s.end_time,
+               e1.name AS requested_by, e2.name AS requested_to
+        FROM swap_requests sr
+        JOIN shifts s ON s.id = sr.shift_id
+        JOIN employees e1 ON e1.id = sr.requested_by
+        JOIN employees e2 ON e2.id = sr.requested_to
+        WHERE sr.status = 'pending' AND e1.store_id = :sid AND e2.store_id = :sid
+        ORDER BY sr.id DESC
+      ");
+      $q->execute([':sid'=>$storeId]);
+    } else {
+      $q = $pdo->query("
+        SELECT sr.id, s.date, s.start_time, s.end_time,
+               e1.name AS requested_by, e2.name AS requested_to
+        FROM swap_requests sr
+        JOIN shifts s ON s.id = sr.shift_id
+        JOIN employees e1 ON e1.id = sr.requested_by
+        JOIN employees e2 ON e2.id = sr.requested_to
+        WHERE sr.status = 'pending'
+        ORDER BY sr.id DESC
+      ");
+    }
+    $pending = $q->fetchAll(PDO::FETCH_ASSOC);
+  } catch (Throwable $e) {
+    $errors[] = "Erro ao carregar solicitações de troca: " . $e->getMessage();
+  }
+}
 ?>
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upcoming Shifts – Escala Hillbillys</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <meta charset="utf-8">
+  <title>Escalas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <?php
-        $activePage = 'escalas';
-        require_once __DIR__ . '/navbar.php';
-    ?>
-    <div class="container mt-4">
-        <h3>Upcoming Shifts</h3>
-        <div class="d-flex mb-3">
-            <a href="export_shifts.php" class="btn btn-secondary me-2">Export CSV</a>
-            <a href="escala_criar.php" class="btn btn-success me-2">New Shift</a>
-            <a href="escala_criar.php?auto=1" class="btn btn-warning me-2">Generate Automatically</a>
-            <a href="escala_sugestao.php" class="btn btn-info">AI Suggestion</a>
-        </div>
-        <!-- Swap requests -->
-        <h5>Swap Requests:</h5>
-        <?php if (empty($swapRequests)): ?>
-            <p>No pending requests.</p>
-        <?php else: ?>
-            <ul class="list-group mb-4">
-                <?php foreach ($swapRequests as $sr): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?php echo htmlspecialchars($sr['requester']) . ' wants to swap with ' . htmlspecialchars($sr['requested_to']); ?>
-                        <div>
-                            <a href="swap_action.php?id=<?php echo urlencode($sr['id']); ?>&action=approve" class="btn btn-sm btn-success ms-2">Approve</a>
-                            <a href="swap_action.php?id=<?php echo urlencode($sr['id']); ?>&action=reject" class="btn btn-sm btn-danger ms-1">Reject</a>
-                        </div>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-        <!-- Tabela de escalas -->
-        <div class="table-responsive">
-            <table id="shiftsTable" class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Date</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Employee</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($shifts as $shift): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($shift['id']); ?></td>
-                            <td><?php echo htmlspecialchars(date('d/m/Y', strtotime($shift['date']))); ?></td>
-                            <td><?php echo htmlspecialchars($shift['start_time']); ?></td>
-                            <td><?php echo htmlspecialchars($shift['end_time']); ?></td>
-                            <td><?php echo htmlspecialchars($shift['employee_name']); ?></td>
-                            <td>
-                                <a href="escala_editar.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-primary">Edit</a>
-                                <a href="escala_excluir.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this shift?');">Delete</a>
-                                <a href="escala_trocar.php?id=<?php echo urlencode($shift['id']); ?>" class="btn btn-sm btn-warning">Swap</a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+<body class="p-3">
+<div class="container">
+  <h1 class="mb-3">Próximos turnos</h1>
+
+  <?php foreach ($errors as $e): ?>
+    <div class="alert alert-danger"><?=$e?></div>
+  <?php endforeach; ?>
+
+  <div class="card mb-4">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Início</th>
+            <th>Fim</th>
+            <th>Funcionário</th>
+            <?php if ($role !== 'manager'): ?><th>Loja</th><?php endif; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($shifts as $s): ?>
+            <tr>
+              <td><?=htmlspecialchars($s['date'])?></td>
+              <td><?=htmlspecialchars(substr($s['start_time'],0,5))?></td>
+              <td><?=htmlspecialchars(substr($s['end_time'],0,5))?></td>
+              <td><?=htmlspecialchars($s['employee'])?></td>
+              <?php if ($role !== 'manager'): ?>
+                <td><?=htmlspecialchars($s['store_name'] ?? '-')?></td>
+              <?php endif; ?>
+            </tr>
+          <?php endforeach; ?>
+          <?php if (empty($shifts)): ?>
+            <tr><td colspan="5" class="text-muted">Sem turnos futuros.</td></tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
     </div>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#shiftsTable').DataTable({
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/en-GB.json' },
-                order: [[1, 'asc'], [2, 'asc']]
-            });
-        });
-    </script>
+  </div>
+
+  <?php if (in_array($role, ['admin','manager'], true)): ?>
+    <h2 class="h4">Solicitações de troca pendentes</h2>
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Data</th>
+              <th>Janela</th>
+              <th>De</th>
+              <th>Para</th>
+              <th class="text-end">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($pending as $p): ?>
+            <tr>
+              <td><?=$p['id']?></td>
+              <td><?=htmlspecialchars($p['date'])?></td>
+              <td><?=htmlspecialchars(substr($p['start_time'],0,5).'–'.substr($p['end_time'],0,5))?></td>
+              <td><?=htmlspecialchars($p['requested_by'])?></td>
+              <td><?=htmlspecialchars($p['requested_to'])?></td>
+              <td class="text-end">
+                <form action="swap_action.php" method="post" class="d-inline">
+                  <input type="hidden" name="id" value="<?=$p['id']?>">
+                  <input type="hidden" name="action" value="approve">
+                  <button class="btn btn-success btn-sm">Aprovar</button>
+                </form>
+                <form action="swap_action.php" method="post" class="d-inline ms-1">
+                  <input type="hidden" name="id" value="<?=$p['id']?>">
+                  <input type="hidden" name="action" value="reject">
+                  <button class="btn btn-outline-danger btn-sm">Rejeitar</button>
+                </form>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          <?php if (empty($pending)): ?>
+            <tr><td colspan="6" class="text-muted">Nenhuma solicitação pendente.</td></tr>
+          <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <?php endif; ?>
+</div>
 </body>
 </html>

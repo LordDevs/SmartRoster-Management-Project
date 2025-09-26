@@ -1,12 +1,17 @@
 <?php
-// logout.php – log the user out by clearing session data
-require_once 'config.php';
+declare(strict_types=1);
+require_once __DIR__ . '/config.php';
 
-// Destroy all session variables
+// limpa a sessão com segurança
 $_SESSION = [];
-session_unset();
+if (ini_get('session.use_cookies')) {
+  $params = session_get_cookie_params();
+  setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+}
 session_destroy();
 
-// Redirect to the login page
+// opcional: iniciar nova sessão pra setar um flash de mensagem
+session_start();
+$_SESSION['login_error'] = 'Você saiu da sessão.';
 header('Location: index.php');
 exit();

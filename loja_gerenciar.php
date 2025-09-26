@@ -1,140 +1,89 @@
 <?php
-// loja_gerenciar.php – allow managers (and administrators) to view and update store information.
-// Managers may edit only their store; administrators could, in an extended version,
-// select which store to edit. Employees linked to the store are also listed.
-
-require_once 'config.php';
-requirePrivileged();
-
-$role = $_SESSION['user_role'];
-$currentUser = currentUser();
-// Determine the current store
-if ($role === 'manager') {
-    $storeId = $currentUser['store_id'] ?? null;
-} else {
-    // Administrators may choose the store via GET; otherwise use the first store
-    $storeId = isset($_GET['store_id']) ? (int)$_GET['store_id'] : null;
-    if (!$storeId) {
-        $storeId = $pdo->query('SELECT id FROM stores ORDER BY id LIMIT 1')->fetchColumn();
-    }
+declare(strict_types=1);
+require_once __DIR__ . '/config.php';
+// Troque para requireAdmin() se tiver
+if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'] ?? '', ['admin'])) {
+  http_response_code(403);
+  die('Access denied.');
 }
 
-// Load store data
-$stmtStore = $pdo->prepare('SELECT * FROM stores WHERE id = ?');
-$stmtStore->execute([$storeId]);
-$store = $stmtStore->fetch(PDO::FETCH_ASSOC);
-if (!$store) {
-    die('Store not found.');
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$errors = [];
+$success = null;
+
+$name = '';
+$location = '';
+
+// Carregar se edição
+if ($id > 0) {
+  $st = $pdo->prepare("SELECT id, name, location FROM stores WHERE id = :id");
+  $st->execute([':id'=>$id]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  if (!$row) {
+    http_response_code(404);
+    die('Loja não encontrada.');
+  }
+  $name = $row['name'];
+  $location = $row['location'];
 }
 
-// Process store updates
-$message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $location = trim($_POST['location'] ?? '');
-    if ($name !== '') {
-        $stmtUpd = $pdo->prepare('UPDATE stores SET name = ?, location = ? WHERE id = ?');
-        $stmtUpd->execute([$name, $location, $storeId]);
-        $message = 'Store details updated successfully.';
-        // Recarregar dados da loja
-        $stmtStore->execute([$storeId]);
-        $store = $stmtStore->fetch(PDO::FETCH_ASSOC);
+  $name = trim($_POST['name'] ?? '');
+  $location = trim($_POST['location'] ?? '');
+
+  if ($name === '') $errors[] = "Informe o nome da loja.";
+
+  if (!$errors) {
+    try {
+      if ($id > 0) {
+        $up = $pdo->prepare("UPDATE stores SET name = :n, location = :l WHERE id = :id");
+        $up->execute([':n'=>$name, ':l'=>$location, ':id'=>$id]);
+        $success = "Loja atualizada.";
+      } else {
+        // code é UNIQUE; gere um código simples a partir do nome (ou peça no form)
+        $code = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', substr($name,0,12)));
+        if ($code === '') $code = 'STORE' . mt_rand(100,999);
+
+        $ins = $pdo->prepare("INSERT INTO stores (name, code, location) VALUES (:n, :c, :l)");
+        $ins->execute([':n'=>$name, ':c'=>$code, ':l'=>$location]);
+        $id = (int)$pdo->lastInsertId();
+        $success = "Loja criada.";
+      }
+    } catch (Throwable $e) {
+      $errors[] = "Erro ao salvar loja: " . $e->getMessage();
     }
+  }
 }
-
-// Fetch store employees
-$stmtEmp = $pdo->prepare('SELECT id, name, email, phone FROM employees WHERE store_id = ? ORDER BY name');
-$stmtEmp->execute([$storeId]);
-$employees = $stmtEmp->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Manage Store – Escala Hillbillys</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <!-- DataTables CSS for the employees table -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <meta charset="utf-8">
+  <title><?=$id ? 'Editar Loja' : 'Criar Loja'?></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="<?php echo ($role === 'manager') ? 'manager_dashboard.php' : 'dashboard.php'; ?>">Escala Hillbillys</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="usuarios_listar.php">Employees</a></li>
-                    <li class="nav-item"><a class="nav-link" href="escala_listar.php">Schedules</a></li>
-                    <li class="nav-item"><a class="nav-link" href="ponto_listar.php">Time Entries</a></li>
-                    <li class="nav-item"><a class="nav-link" href="relatorios.php">Reports</a></li>
-                    <li class="nav-item"><a class="nav-link" href="desempenho.php">Performance</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="analytics.php">Analytics</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="loja_gerenciar.php">Store</a></li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="logout.php">Sign Out</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    <div class="container mt-4">
-        <h3>Manage Store</h3>
-        <?php if ($message): ?>
-            <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
-        <?php endif; ?>
-        <form method="post" class="mb-4">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Store Name</label>
-                    <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($store['name']); ?>" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Location</label>
-                    <input type="text" class="form-control" name="location" value="<?php echo htmlspecialchars($store['location']); ?>">
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </div>
-        </form>
-        <h4>Store Employees</h4>
-        <div class="table-responsive">
-            <table id="employeesTable" class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($employees as $emp): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($emp['id']); ?></td>
-                            <td><?php echo htmlspecialchars($emp['name']); ?></td>
-                            <td><?php echo htmlspecialchars($emp['email']); ?></td>
-                            <td><?php echo htmlspecialchars($emp['phone']); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        $('#employeesTable').DataTable({
-            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/en-GB.json' },
-            order: [[1, 'asc']]
-        });
-    });
-    </script>
+<body class="p-3">
+  <div class="container" style="max-width:720px">
+    <h1 class="mb-3"><?=$id ? 'Editar Loja' : 'Criar Loja'?></h1>
+
+    <?php if ($success): ?><div class="alert alert-success"><?=$success?></div><?php endif; ?>
+    <?php foreach ($errors as $e): ?><div class="alert alert-danger"><?=$e?></div><?php endforeach; ?>
+
+    <form method="post" class="card card-body">
+      <div class="mb-3">
+        <label class="form-label">Nome</label>
+        <input type="text" name="name" class="form-control" value="<?=htmlspecialchars($name)?>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Local (Location)</label>
+        <input type="text" name="location" class="form-control" value="<?=htmlspecialchars($location)?>">
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary">Salvar</button>
+        <a href="lojas_listar.php" class="btn btn-outline-secondary">Voltar</a>
+      </div>
+    </form>
+  </div>
 </body>
 </html>
