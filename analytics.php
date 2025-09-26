@@ -2,12 +2,13 @@
 // analytics.php – advanced metrics dashboard for schedules and time entries
 require_once __DIR__ . '/config.php';
 requireLogin();
-$user = currentUser();
-if (!$user || !in_array($user['role'], ['admin','manager'])) {
+
+$role = $_SESSION['user']['role'] ?? null;
+if (!$role || !in_array($role, ['admin','manager'], true)) {
     header('Location: dashboard.php');
     exit();
 }
-$storeId = $user['store_id'] ?? null;
+$storeId = $_SESSION['user']['store_id'] ?? null;
 
 // Helper to calculate hours in seconds
 function hoursBetween($start, $end) {
@@ -24,7 +25,7 @@ $workedHours    = array_fill(0, 7, 0);
 $hoursByEmployee = [];
 
 // Fetch shifts
-if ($user['role'] === 'manager') {
+if ($role === 'manager') {
     $stmtShifts = $pdo->prepare('SELECT s.employee_id, e.name, s.date, s.start_time, s.end_time FROM shifts s JOIN employees e ON s.employee_id = e.id WHERE e.store_id = ?');
     $stmtShifts->execute([$storeId]);
 } else {
@@ -41,7 +42,7 @@ foreach ($shiftRows as $row) {
 }
 
 // Fetch time entries
-if ($user['role'] === 'manager') {
+if ($role === 'manager') {
     $stmtEntries = $pdo->prepare('SELECT te.employee_id, e.name, te.clock_in, te.clock_out FROM time_entries te JOIN employees e ON te.employee_id = e.id WHERE e.store_id = ?');
     $stmtEntries->execute([$storeId]);
 } else {
@@ -60,7 +61,7 @@ foreach ($entryRows as $row) {
 }
 
 // Convert seconds to hours (two decimals)
-for ($i=0; $i<7; $i++) {
+for ($i = 0; $i < 7; $i++) {
     $scheduledHours[$i] = round($scheduledHours[$i] / 3600, 2);
     $workedHours[$i]    = round($workedHours[$i] / 3600, 2);
 }
@@ -141,15 +142,17 @@ new Chart(ctxEmp, {
         labels: labelsEmp,
         datasets: [
             { label:'Scheduled Hours', data: scheduledEmp, backgroundColor:'rgba(54,162,235,0.5)', borderColor:'rgba(54,162,235,1)', borderWidth:1 },
-            { label:'Worked Hours', data: workedEmp, backgroundColor:'rgba(255,99,132,0.5)', borderColor:'rgba(255,99,132,1)', borderWidth:1 }
+            { label:'Worked Hours', data: workedEmp,    backgroundColor:'rgba(255,99,132,0.5)', borderColor:'rgba(255,99,132,1)', borderWidth:1 }
         ]
     },
     options: {
         responsive: true,
-        plugins: { title: { display: true, text: 'Hours by Employee' } },
+        plugins: {
+            title: { display: true, text: 'Hours by Employee' }
+        },
         scales: {
-            y: { beginAtZero:true, title: { display:true, text:'Hours' } },
-            x: { title: { display:true, text:'Employee' } }
+            y: { beginAtZero: true, title: { display: true, text: 'Hours' } },
+            x: { title: { display: true, text: 'Employee' }, ticks: { display: false } }
         }
     }
 });

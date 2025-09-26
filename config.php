@@ -41,14 +41,14 @@ try {
 }
 
 function isLoggedIn(): bool {
-    return isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']);
+    return isset($_SESSION['user']['id']) && is_numeric($_SESSION['user']['id']);
 }
 
 function requireLogin(): void {
-  if (empty($_SESSION['user'])) {
-    http_response_code(403);
-    die('Access denied.');
-  }
+    if (empty($_SESSION['user'])) {
+        http_response_code(403);
+        die('Access denied.');
+    }
 }
 
 function currentUser(): ?array {
@@ -57,7 +57,7 @@ function currentUser(): ?array {
     static $cached = null;
     if ($cached !== null) return $cached;
     $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$_SESSION['user']['id']]);
     $cached = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     return $cached;
 }
@@ -72,11 +72,11 @@ function requireRole(array $roles): void {
 }
 // --- Compat Shims (código legado) ---
 function requireAdmin(): void {
-  requireLogin();
-  if (($_SESSION['user']['role'] ?? '') !== 'admin') {
-    http_response_code(403);
-    die('Access denied.');
-  }
+    requireLogin();
+    if (($_SESSION['user']['role'] ?? '') !== 'admin') {
+        http_response_code(403);
+        die('Access denied.');
+    }
 }
 function requireManager(): void {
     // Ensure user is logged in and has manager (or admin) role
@@ -84,22 +84,22 @@ function requireManager(): void {
     requireRole(['manager','admin']);
 }
 function requireEmployee(): void {
-  requireLogin();
-  if (($_SESSION['user']['role'] ?? '') !== 'employee') {
-    http_response_code(403);
-    die('Access denied.');
-  }
+    requireLogin();
+    if (($_SESSION['user']['role'] ?? '') !== 'employee') {
+        http_response_code(403);
+        die('Access denied.');
+    }
 }
 /**
  * Em versões antigas, "privileged" normalmente significava "admin ou manager".
  * Ajuste se o seu conceito for diferente.
  */
 function requirePrivileged(): void {
-  requireLogin();
-  if (!in_array(($_SESSION['user']['role'] ?? ''), ['admin','manager'], true)) {
-    http_response_code(403);
-    die('Access denied.');
-  }
+    requireLogin();
+    if (!in_array(($_SESSION['user']['role'] ?? ''), ['admin','manager'], true)) {
+        http_response_code(403);
+        die('Access denied.');
+    }
 }
 
 /** Helpers legados comuns */

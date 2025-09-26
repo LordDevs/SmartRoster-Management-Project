@@ -18,7 +18,7 @@
  *
  * The file determines the current user's role (admin, manager, employee)
  * using the helper currentUser() from config.php if available. It falls
- * back to $_SESSION['user_role'] when currentUser() is not defined.
+ * back to $_SESSION['user']['role'] when currentUser() is not defined.
  */
 
 // Determine the current user role. Use currentUser() if defined.
@@ -27,7 +27,7 @@ if (function_exists('currentUser')) {
     $role = $u['role'] ?? null;
 } else {
     // Fallback: use session variable if present
-    $role = $_SESSION['user_role'] ?? null;
+    $role = $_SESSION['user']['role'] ?? null;
 }
 
 // Determine brand link based on role
@@ -50,7 +50,6 @@ if (!function_exists('nav_active')) {
         return ($activePage === $page) ? 'active' : '';
     }
 }
-
 ?>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
