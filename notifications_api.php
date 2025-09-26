@@ -3,7 +3,15 @@ require_once 'config.php';
 require_once 'notifications_helpers.php';
 requireLogin();
 header('Content-Type: application/json');
-$userId=(int)$_SESSION['user_id']; ensureNotificationsTable($pdo);
+
+$userId=isset($_SESSION['user']['id'])?(int)$_SESSION['user']['id']:0;
+if($userId<=0){
+  http_response_code(403);
+  echo json_encode(['success'=>false,'message'=>'Access denied.']);
+  exit();
+}
+
+ensureNotificationsTable($pdo);
 $method=$_SERVER['REQUEST_METHOD']; $action=$_GET['action'] ?? $_POST['action'] ?? 'count';
 try{
   if($method==='GET'){
